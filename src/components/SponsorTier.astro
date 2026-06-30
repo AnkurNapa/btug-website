@@ -1,0 +1,74 @@
+---
+// SponsorTier — renders one tier group of sponsor logos.
+// Filters active===true so a removed sponsor (active:false) drops without
+// breaking the grid. A logo/link change is a CMS edit, not a code change.
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  title: string;
+  blurb?: string;
+  sponsors: CollectionEntry<'sponsors'>['data'][];
+}
+
+const { title, blurb, sponsors } = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const activeSponsors = (sponsors ?? []).filter((s) => (s?.active ?? true));
+
+const logoSrc = (logo: string) =>
+  logo.startsWith('http') ? logo : `${base}${logo}`;
+---
+{activeSponsors.length > 0 && (
+  <section class="tier" aria-label={`${title} sponsors`}>
+    <header class="tier-head">
+      <h3 class="tier-title">{title}</h3>
+      {blurb && <p class="tier-blurb">{blurb}</p>}
+    </header>
+    <ul class="tier-grid">
+      {activeSponsors.map((sponsor) => (
+        <li class="tier-item card">
+          {sponsor?.url ? (
+            <a href={sponsor.url} target="_blank" rel="noopener noreferrer" class="tier-link">
+              <img
+                src={logoSrc(sponsor.logo)}
+                alt={`${sponsor.name} logo`}
+                class="tier-logo"
+                loading="lazy"
+              />
+              <span class="visually-hidden">{sponsor.name} (opens in a new tab)</span>
+            </a>
+          ) : (
+            <img
+              src={logoSrc(sponsor.logo)}
+              alt={`${sponsor.name} logo`}
+              class="tier-logo"
+              loading="lazy"
+            />
+          )}
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+<style>
+  .tier { display: grid; gap: var(--space-3); }
+  .tier-head { display: grid; gap: 0.3rem; }
+  .tier-title {
+    font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--color-brand); font-family: var(--font-sans); font-weight: 700;
+  }
+  .tier-blurb { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .tier-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--space-3);
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+  .tier-item {
+    display: grid; place-items: center; padding: var(--space-4);
+    min-height: 110px;
+  }
+  .tier-item:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .tier-link { display: grid; place-items: center; width: 100%; }
+  .tier-logo { max-height: 56px; width: auto; object-fit: contain; }
+</style>

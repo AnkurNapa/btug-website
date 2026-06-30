@@ -1,0 +1,22 @@
+# CODEOWNERS — require maintainer review on structural files.
+#
+# These files define how the site is built, deployed, and how content is
+# validated. A well-meaning content edit that touches one of them can break the
+# whole build (and, without review, block every future deploy). Listing them
+# here forces a review from the maintainers team before any change can merge.
+#
+# Replace @btug-maintainers with your real GitHub team or usernames, e.g.
+#   /astro.config.mjs  @alice @bob
+# Team handles require the team to have write access to this repository.
+
+# Content schema — a bad schema change breaks every content collection.
+/src/content/config.ts        @btug-maintainers
+
+# Build + deploy configuration.
+/astro.config.mjs             @btug-maintainers
+
+# CI/CD, governance, and these ownership rules themselves.
+/.github/                     @btug-maintainers
+
+# Decap/Netlify CMS config — drives the non-technical editing UI.
+/public/admin/config.yml      @btug-maintainers

@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import BlogCard from '../../components/BlogCard.astro';
+
+// Drafts (draft: true) are excluded — see draft.md, which must NOT appear here.
+const all = await getCollection('blog');
+const posts = all
+  .filter((entry) => entry.data.draft !== true)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+// Build the filter list from categories + tags (deduped, sorted).
+const filterSet = new Set<string>();
+for (const post of posts) {
+  if (post.data.category) filterSet.add(post.data.category);
+  for (const tag of post.data.tags) filterSet.add(tag);
+}
+const filters = [...filterSet].sort((a, b) => a.localeCompare(b));
+---
+<BaseLayout
+  title="Blog"
+  description="Tutorials, tips, and community write-ups from the Bengaluru Tableau User Group."
+>
+  <section class="section">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="From the community"
+        title="BTUG Blog"
+        lead="Hands-on Tableau tutorials, design notes, and event write-ups from our members."
+      />
+
+      {filters.length > 0 && (
+        <div class="filter" role="group" aria-label="Filter posts by topic">
+          <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">All</button>
+          {filters.map((f) => (
+            <button class="chip" type="button" data-filter={f} aria-pressed="false">{f}</button>
+          ))}
+        </div>
+      )}
+
+      {posts.length > 0 ? (
+        <ul class="blog-grid" id="blog-grid">
+          {posts.map((post) => (
+            <li class="blog-grid-item" data-topics={[post.data.category, ...post.data.tags].filter(Boolean).join('|')}>
+              <BlogCard
+                title={post.data.title}
+                slug={post.slug}
+                date={post.data.date}
+                author={post.data.author}
+                tags={post.data.tags}
+                excerpt={post.data.excerpt}
+                cover={post.data.cover}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="empty">No posts yet — our first write-ups are on the way.</p>
+      )}
+
+      <p class="filter-empty" id="filter-empty" hidden>No posts match that topic yet.</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .filter { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: var(--space-6); }
+  .chip {
+    font: inherit; font-size: var(--text-sm); font-weight: 600;
+    padding: 0.4rem 0.9rem; border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-raised); color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+  }
+  .chip:hover { border-color: var(--color-brand); color: var(--color-brand-strong); }
+  .chip.is-active { background: var(--gradient-brand); color: #fff; border-color: transparent; }
+  .blog-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--space-4); grid-template-columns: 1fr;
+  }
+  .blog-grid-item[hidden] { display: none; }
+  .empty, .filter-empty { color: var(--color-text-muted); }
+  @media (min-width: 640px) { .blog-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .blog-grid { grid-template-columns: repeat(3, 1fr); } }
+</style>
+
+<script>
+  // Progressive enhancement: without JS, all posts stay visible.
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
+  const items = Array.from(document.querySelectorAll<HTMLLIElement>('.blog-grid-item'));
+  const emptyMsg = document.getElementById('filter-empty');
+
+  function applyFilter(filter: string) {
+    let visible = 0;
+    for (const item of items) {
+      const topics = (item.dataset.topics ?? '').split('|');
+      const show = filter === 'all' || topics.includes(filter);
+      item.hidden = !show;
+      if (show) visible++;
+    }
+    if (emptyMsg) emptyMsg.hidden = visible !== 0;
+  }
+
+  for (const chip of chips) {
+    chip.addEventListener('click', () => {
+      for (const c of chips) {
+        const active = c === chip;
+        c.classList.toggle('is-active', active);
+        c.setAttribute('aria-pressed', String(active));
+      }
+      applyFilter(chip.dataset.filter ?? 'all');
+    });
+  }
+</script>

@@ -1,0 +1,60 @@
+---
+// BlogCard — compact preview that links to /blog/[slug].
+interface Props {
+  title: string;
+  slug: string;
+  date: Date;
+  author: string;
+  tags?: string[];
+  excerpt?: string;
+  cover?: string;
+}
+
+const { title, slug, date, author, tags = [], excerpt, cover } = Astro.props;
+
+const displayDate = new Intl.DateTimeFormat('en-IN', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+}).format(date);
+const isoDate = date.toISOString();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const postHref = `${base}/blog/${slug}`;
+---
+<article class="card blog-card">
+  {cover && (
+    <a href={postHref} class="blog-cover" tabindex="-1" aria-hidden="true">
+      <img src={cover} alt="" width="640" height="360" loading="lazy" />
+    </a>
+  )}
+  <div class="blog-body">
+    {tags.length > 0 && (
+      <ul class="blog-tags" aria-label="Tags">
+        {tags.slice(0, 3).map((tag) => <li class="pill pill-muted">{tag}</li>)}
+      </ul>
+    )}
+    <h3 class="blog-title">
+      <a href={postHref}>{title}</a>
+    </h3>
+    {excerpt && <p class="blog-excerpt">{excerpt}</p>}
+    <p class="blog-meta">
+      <span>{author}</span>
+      <span aria-hidden="true">·</span>
+      <time datetime={isoDate}>{displayDate}</time>
+    </p>
+  </div>
+</article>
+
+<style>
+  .blog-card { display: grid; overflow: hidden; height: 100%; }
+  .blog-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .blog-cover { display: block; }
+  .blog-cover img { aspect-ratio: 16 / 9; object-fit: cover; }
+  .blog-body { display: grid; gap: var(--space-2); padding: var(--space-4); align-content: start; }
+  .blog-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; }
+  .blog-title { font-size: var(--text-lg); }
+  .blog-title a { color: inherit; text-decoration: none; }
+  .blog-title a:hover { color: var(--color-brand-strong); }
+  .blog-excerpt { color: var(--color-text-muted); }
+  .blog-meta { display: flex; gap: 0.5rem; align-items: center; font-size: var(--text-sm); color: var(--color-text-muted); }
+</style>

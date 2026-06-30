@@ -1,0 +1,89 @@
+---
+// NewsletterSignup — links/embeds the Google Form newsletter sign-up.
+//
+// NO BACKEND: this is a static GitHub Pages site, so there is no server to
+// validate submissions or stop bots. Spam defence is layered:
+//   1. Honeypot field ("website") — hidden from humans, named to bait bots.
+//      A static page can't reject a filled honeypot itself, but if the Google
+//      Form is given a matching hidden field the organizers can filter those
+//      responses out in Sheets.
+//   2. Google Forms' own CAPTCHA / "verified responses" handles the real
+//      automated-abuse defence on submit.
+// Double opt-in: the linked form sends a confirmation email; subscribers are
+// only added after they click that confirmation link.
+import site from '../data/site.yaml';
+
+interface Props {
+  /** Embed the form inline (iframe) instead of linking out. */
+  embed?: boolean;
+}
+const { embed = false } = Astro.props;
+const formUrl: string = site.forms?.newsletter ?? '';
+const hasForm = Boolean(formUrl) && !formUrl.includes('REPLACE_');
+const organizerEmail = 'organizers@btug.community';
+---
+<section class="card newsletter" aria-labelledby="newsletter-heading">
+  <p class="eyebrow">Stay in the loop</p>
+  <h2 id="newsletter-heading" class="newsletter-title">Join the BTUG newsletter</h2>
+  <p class="newsletter-lead">
+    Monthly meet-up announcements, learning resources, and community highlights.
+    We use <strong>double opt-in</strong> — after you sign up, click the
+    confirmation link we email you to complete your subscription. No spam, and
+    you can unsubscribe anytime.
+  </p>
+
+  {hasForm ? (
+    embed ? (
+      <div class="form-embed">
+        <iframe
+          src={formUrl}
+          title="BTUG newsletter sign-up form"
+          loading="lazy"
+          width="100%"
+          height="640"
+        >Loading newsletter form…</iframe>
+        <p class="form-note">
+          Form not loading? <a href={formUrl} rel="noopener noreferrer" target="_blank">Open it in a new tab</a>.
+        </p>
+      </div>
+    ) : (
+      <a class="btn btn-primary newsletter-cta" href={formUrl} rel="noopener noreferrer" target="_blank">
+        Subscribe via Google Form
+        <span class="visually-hidden">(opens in a new tab)</span>
+      </a>
+    )
+  ) : (
+    <p class="form-note" role="note">
+      Our sign-up form is being set up. In the meantime, email
+      <a href={`mailto:${organizerEmail}?subject=Newsletter%20sign-up`}> {organizerEmail}</a>
+      to be added manually.
+    </p>
+  )}
+
+  {/* Honeypot: bots fill hidden fields, humans never see them.
+      Mirror this field name in the Google Form to filter spam in Sheets. */}
+  <div class="visually-hidden" aria-hidden="true">
+    <label for="newsletter-website">Leave this field empty</label>
+    <input
+      id="newsletter-website"
+      name="website"
+      type="text"
+      tabindex="-1"
+      autocomplete="off"
+    />
+  </div>
+
+  <p class="form-note">
+    Free-tier note: if Google Forms hits its response cap, email
+    <a href={`mailto:${organizerEmail}`}> {organizerEmail}</a> and we'll add you directly.
+  </p>
+</section>
+
+<style>
+  .newsletter { display: grid; gap: var(--space-2); padding: var(--space-6); }
+  .newsletter-title { font-size: var(--text-lg); }
+  .newsletter-lead { color: var(--color-text-muted); max-width: 52ch; }
+  .newsletter-cta { align-self: start; margin-top: var(--space-1); }
+  .form-embed iframe { border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface-raised); }
+  .form-note { font-size: var(--text-sm); color: var(--color-text-muted); }
+</style>

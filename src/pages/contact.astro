@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ContactForm from '../components/ContactForm.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+import site from '../data/site.yaml';
+
+const socials = site.socials ?? {};
+const socialLinks = (
+  [
+    { label: 'LinkedIn', url: socials.linkedin },
+    { label: 'Instagram', url: socials.instagram },
+  ] as { label: string; url?: string }[]
+).filter((s) => Boolean(s.url));
+---
+<BaseLayout
+  title="Contact"
+  description="Reach the Bengaluru Tableau User Group organizers, join our community chat, or subscribe to the newsletter."
+>
+  <section class="section">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Say hello"
+        title="Contact BTUG"
+        lead="Whether you want to speak, sponsor, host, or just ask a question — here's how to reach us. All forms run on Google Forms; there's no account to create."
+      />
+
+      <ContactForm embed={true} />
+
+      <div class="below">
+        <NewsletterSignup embed={false} />
+
+        {socialLinks.length > 0 && (
+          <section class="card socials" aria-labelledby="socials-heading">
+            <h2 id="socials-heading" class="socials-title">Follow along</h2>
+            <p class="socials-lead">Event photos, recaps, and announcements.</p>
+            <ul class="social-list">
+              {socialLinks.map((s) => (
+                <li>
+                  <a class="btn btn-secondary" href={s.url} rel="noopener noreferrer" target="_blank">
+                    {s.label}
+                    <span class="visually-hidden">(opens in a new tab)</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .below {
+    margin-top: var(--space-6);
+    display: grid; gap: var(--space-4); grid-template-columns: 1fr;
+  }
+  @media (min-width: 52rem) { .below { grid-template-columns: 1.4fr 1fr; align-items: start; } }
+  .socials { padding: var(--space-6); display: grid; gap: var(--space-2); align-content: start; }
+  .socials-title { font-size: var(--text-lg); }
+  .socials-lead { color: var(--color-text-muted); }
+  .social-list { list-style: none; padding: 0; display: grid; gap: var(--space-2); }
+  .social-list .btn { justify-content: center; }
+</style>

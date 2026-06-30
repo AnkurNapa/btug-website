@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<BaseLayout
+  title="Page not found"
+  description="That page wandered off. Let's get you back to the data."
+>
+  <section class="section notfound" aria-labelledby="nf-heading">
+    <div class="wrap nf-inner">
+      <p class="nf-code" aria-hidden="true">404</p>
+      <p class="eyebrow">Page not found</p>
+      <h1 id="nf-heading">This view has no data points</h1>
+      <p class="lead">
+        The page you were looking for doesn't exist, moved, or never made it past
+        review. Let's get you back to something useful.
+      </p>
+      <div class="nf-actions">
+        <a class="btn btn-primary" href={base + '/'}>Back to home</a>
+        <a class="btn btn-secondary" href={base + '/events'}>Browse events</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .notfound { background: var(--gradient-hero); min-height: 60vh; display: grid; align-items: center; }
+  .nf-inner { display: grid; gap: var(--space-3); max-width: 52ch; }
+  .nf-code {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-hero);
+    line-height: 1;
+    color: var(--color-brand);
+    letter-spacing: -0.04em;
+  }
+  .nf-inner h1 { font-size: var(--text-2xl); }
+  .nf-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+</style>

@@ -1,0 +1,22 @@
+---
+// Converts every <time data-local> placeholder on the page to the viewer's
+// local date/time. IST is rendered server-side (see formatIST); this fills in
+// the "your local time" companion so non-IST visitors see a familiar value.
+// Progressive enhancement: without JS the placeholder text stays as-is.
+---
+<script>
+  const fmt = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  document.querySelectorAll<HTMLTimeElement>('time[data-local]').forEach((el) => {
+    const iso = el.getAttribute('datetime');
+    if (!iso) return;
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return;
+    // Resolve the viewer's timezone abbreviation/name for clarity.
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    el.textContent = `${fmt.format(date)}${tz ? ` ${tz}` : ''}`;
+  });
+</script>

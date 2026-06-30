@@ -1,0 +1,69 @@
+---
+// VolunteerCard — one volunteer role.
+// EDGE CASE: when a role is filled (filled===true OR filledCount>=capacity) we
+// show a "Role filled" pill and NO sign-up button, so nobody applies into a
+// closed slot. Open roles link to signupUrl; if that is missing we show an
+// "Opening soon" disabled state instead of a dead link.
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  role: CollectionEntry<'volunteer'>['data'];
+}
+
+const { role } = Astro.props;
+
+const capacity = role?.capacity ?? 1;
+const filledCount = role?.filledCount ?? 0;
+const isFilled = (role?.filled ?? false) || filledCount >= capacity;
+const spotsLeft = Math.max(capacity - filledCount, 0);
+const hasSignup = Boolean(role?.signupUrl);
+---
+<article class="vol-card card">
+  <div class="vol-head">
+    <h3 class="vol-role">{role.role}</h3>
+    {isFilled ? (
+      <span class="pill pill-muted">Role filled</span>
+    ) : (
+      <span class="pill pill-success">{spotsLeft} {spotsLeft === 1 ? 'spot' : 'spots'} open</span>
+    )}
+  </div>
+
+  {role?.summary && <p class="vol-summary">{role.summary}</p>}
+
+  <p class="vol-capacity">
+    <span class="visually-hidden">Capacity: </span>
+    {filledCount} of {capacity} filled
+  </p>
+
+  <div class="vol-action">
+    {isFilled ? (
+      <button class="btn btn-secondary" type="button" disabled aria-disabled="true">
+        Role filled
+      </button>
+    ) : hasSignup ? (
+      <a class="btn btn-primary" href={role.signupUrl} target="_blank" rel="noopener noreferrer">
+        Sign up
+        <span class="visually-hidden"> for {role.role} (opens in a new tab)</span>
+      </a>
+    ) : (
+      <button class="btn btn-secondary" type="button" disabled aria-disabled="true">
+        Opening soon
+      </button>
+    )}
+  </div>
+</article>
+
+<style>
+  .vol-card {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    align-content: start;
+  }
+  .vol-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .vol-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+  .vol-role { font-size: var(--text-lg); }
+  .vol-summary { color: var(--color-text-muted); }
+  .vol-capacity { font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 600; }
+  .vol-action { justify-self: start; }
+</style>

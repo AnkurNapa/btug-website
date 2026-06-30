@@ -1,0 +1,133 @@
+---
+// ContactForm — Google Form embed/link for member questions, plus direct
+// fallbacks (organizer email + community chat invites).
+//
+// NO BACKEND: spam defence mirrors NewsletterSignup — a hidden honeypot
+// ("website") to bait bots (filtered in Google Sheets if the Form carries a
+// matching hidden field) and Google Forms' own CAPTCHA for real bot defence.
+// A static page cannot truly validate input; that is intentional and the
+// reason we lean on Google's verification plus a manual email fallback.
+import site from '../data/site.yaml';
+
+interface Props {
+  embed?: boolean;
+}
+const { embed = true } = Astro.props;
+
+const formUrl: string = site.forms?.contact ?? '';
+const hasForm = Boolean(formUrl) && !formUrl.includes('REPLACE_');
+const organizerEmail = 'organizers@btug.community';
+
+const invites = site.chatInvites ?? {};
+const lastChecked: string = site.chatInvitesLastChecked
+  ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+      .format(new Date(site.chatInvitesLastChecked))
+  : '';
+
+type Channel = { key: string; label: string; url: string };
+const channels: Channel[] = (
+  [
+    { key: 'whatsapp', label: 'WhatsApp group', url: invites.whatsapp },
+    { key: 'slack', label: 'Slack workspace', url: invites.slack },
+    { key: 'discord', label: 'Discord server', url: invites.discord },
+  ] as Channel[]
+).filter((c) => Boolean(c.url) && !c.url.includes('REPLACE_'));
+---
+<div class="contact-grid">
+  <section class="card contact-form" aria-labelledby="contact-heading">
+    <p class="eyebrow">Get in touch</p>
+    <h2 id="contact-heading" class="contact-title">Message the organizers</h2>
+    <p class="contact-lead">
+      Questions, speaker pitches, venue or sponsorship offers — send them our way.
+      We typically reply within a few days.
+    </p>
+
+    {hasForm ? (
+      embed ? (
+        <div class="form-embed">
+          <iframe
+            src={formUrl}
+            title="BTUG contact form"
+            loading="lazy"
+            width="100%"
+            height="720"
+          >Loading contact form…</iframe>
+          <p class="form-note">
+            Form not loading? <a href={formUrl} rel="noopener noreferrer" target="_blank">Open it in a new tab</a>.
+          </p>
+        </div>
+      ) : (
+        <a class="btn btn-primary" href={formUrl} rel="noopener noreferrer" target="_blank">
+          Open the contact form
+          <span class="visually-hidden">(opens in a new tab)</span>
+        </a>
+      )
+    ) : (
+      <p class="form-note" role="note">
+        Our contact form is being set up. Please email us directly for now.
+      </p>
+    )}
+
+    {/* Honeypot — hidden from humans, baits bots. */}
+    <div class="visually-hidden" aria-hidden="true">
+      <label for="contact-website">Leave this field empty</label>
+      <input
+        id="contact-website"
+        name="website"
+        type="text"
+        tabindex="-1"
+        autocomplete="off"
+      />
+    </div>
+
+    <p class="form-note">
+      Prefer email, or the form is unavailable? Write to
+      <a href={`mailto:${organizerEmail}`}> {organizerEmail}</a>.
+    </p>
+  </section>
+
+  <aside class="card contact-side" aria-labelledby="reach-heading">
+    <h2 id="reach-heading" class="contact-title">Other ways to reach us</h2>
+
+    <div class="side-block">
+      <h3>Email</h3>
+      <p><a href={`mailto:${organizerEmail}`}>{organizerEmail}</a></p>
+    </div>
+
+    {channels.length > 0 && (
+      <div class="side-block">
+        <h3>Community chat</h3>
+        <ul class="channel-list">
+          {channels.map((c) => (
+            <li>
+              <a class="btn btn-secondary channel-btn" href={c.url} rel="noopener noreferrer" target="_blank">
+                {c.label}
+                <span class="visually-hidden">(opens in a new tab)</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        {lastChecked && (
+          <p class="form-note">
+            Invite links are checked monthly (last verified {lastChecked}). If one has
+            expired, email us and we'll send a fresh link.
+          </p>
+        )}
+      </div>
+    )}
+  </aside>
+</div>
+
+<style>
+  .contact-grid { display: grid; gap: var(--space-4); }
+  @media (min-width: 52rem) { .contact-grid { grid-template-columns: 1.4fr 1fr; align-items: start; } }
+  .contact-form, .contact-side { padding: var(--space-6); display: grid; gap: var(--space-2); align-content: start; }
+  .contact-title { font-size: var(--text-lg); }
+  .contact-lead { color: var(--color-text-muted); max-width: 52ch; }
+  .form-embed iframe { border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface-raised); }
+  .form-note { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .side-block { display: grid; gap: var(--space-1); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
+  .side-block h3 { font-size: var(--text-base); }
+  .channel-list { list-style: none; padding: 0; display: grid; gap: var(--space-2); }
+  .channel-btn { justify-content: center; }
+</style>

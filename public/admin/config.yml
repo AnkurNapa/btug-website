@@ -1,0 +1,499 @@
+# =============================================================================
+# Decap CMS configuration for the Bengaluru Tableau User Group (BTUG) website.
+#
+# This file is the EDITING UI contract. Every field here mirrors the Zod
+# schemas in src/content/config.ts EXACTLY (same field names, enums, required vs
+# optional, and defaults) so the CMS cannot produce content that fails the
+# Astro build. If you change a schema in config.ts, change it here too.
+#
+# Timezone note: all date/time fields are entered and read as IST
+# (Asia/Kolkata). The site renders them as IST plus the visitor's local time.
+# =============================================================================
+
+# --- BACKEND ----------------------------------------------------------------
+# Using the GitHub backend (commits straight to the repo via GitHub OAuth).
+#
+# IMPORTANT - the org must pick ONE auth path before non-technical organizers
+# can log in. Two supported options:
+#
+#   A) GitHub backend (configured below). Requires a GitHub OAuth application
+#      and an OAuth proxy/provider so editors authenticate with their GitHub
+#      account. Netlify can host this proxy for free, or use a small serverless
+#      OAuth function (e.g. github.com/sterlingwes/decap-proxy). Editors must be
+#      collaborators on the repo. Chosen here because the site already lives on
+#      GitHub Pages and avoids running Netlify Identity.
+#
+#   B) git-gateway (commented out below). Use this ONLY if the site is hosted
+#      on Netlify with Netlify Identity enabled. It lets editors log in WITHOUT
+#      a GitHub account. To switch, comment out the `github` block and
+#      uncomment the `git-gateway` block.
+#
+# Replace REPLACE_OWNER with the real GitHub org/user that owns the repo.
+backend:
+  name: github
+  repo: REPLACE_OWNER/btug-website
+  branch: main
+
+# --- OPTION B (git-gateway + Netlify Identity) - uncomment to use instead ----
+# backend:
+#   name: git-gateway
+#   branch: main
+
+# Editorial workflow turns every save into a draft / pull request instead of a
+# direct commit. This gives review before publish and reduces the "two
+# organizers edited the same file" conflict because changes land as PRs.
+publish_mode: editorial_workflow
+
+# --- MEDIA ------------------------------------------------------------------
+# Uploaded images are committed into the repo under public/images/uploads and
+# served from /images/uploads at runtime.
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+# IMAGE SIZE DISCIPLINE: Decap cannot hard-block large files, so every image
+# widget below carries the hint "Max 500KB, compress before upload". Oversized
+# images permanently bloat the Git history. Compress with squoosh.app or
+# tinypng.com before uploading.
+
+# --- COLLECTIONS ------------------------------------------------------------
+collections:
+  # ===========================================================================
+  # EVENTS  (mirrors `events` schema)
+  # ===========================================================================
+  - name: events
+    label: Events
+    label_singular: Event
+    folder: src/content/events
+    create: true
+    slug: "{{slug}}"
+    summary: "{{name}} — {{date}}"
+    fields:
+      - { name: name, label: Event name, widget: string }
+      # date: z.coerce.date() (required). Entered in IST.
+      - name: date
+        label: Date & time (IST)
+        widget: datetime
+        date_format: "YYYY-MM-DD"
+        time_format: "HH:mm"
+        format: "YYYY-MM-DDTHH:mm:ssZ"
+        hint: "Enter the event start in IST."
+      # endDate: .optional()
+      - name: endDate
+        label: End date & time (IST)
+        widget: datetime
+        required: false
+        date_format: "YYYY-MM-DD"
+        time_format: "HH:mm"
+        format: "YYYY-MM-DDTHH:mm:ssZ"
+        hint: "Optional. Leave blank for single-session events."
+      - { name: venue, label: Venue, widget: string }
+      - name: type
+        label: Format
+        widget: select
+        options: ["in-person", "virtual", "hybrid"]
+      # status: default 'upcoming'
+      - name: status
+        label: Status
+        widget: select
+        options: ["upcoming", "past", "cancelled"]
+        default: "upcoming"
+        required: false
+      # banner: .optional() image
+      - name: banner
+        label: Banner image
+        widget: image
+        required: false
+        hint: "Max 500KB, compress before upload."
+      # speaker: .optional() slug reference into speakers collection
+      - name: speaker
+        label: Speaker
+        widget: relation
+        collection: speakers
+        search_fields: ["name"]
+        value_field: "{{slug}}"
+        display_fields: ["name"]
+        required: false
+        hint: "Links to a speaker. Add the speaker first if missing."
+      # capacity: int nonnegative .optional()
+      - name: capacity
+        label: Capacity
+        widget: number
+        required: false
+        value_type: int
+        min: 0
+        hint: "Total seats available. Leave blank if uncapped."
+      # seatsTaken: default 0
+      - name: seatsTaken
+        label: Seats taken
+        widget: number
+        default: 0
+        value_type: int
+        min: 0
+        required: false
+        hint: "Update manually after RSVPs — Google Forms can't auto-count."
+      # waitlistEnabled: default false
+      - name: waitlistEnabled
+        label: Waitlist enabled
+        widget: boolean
+        default: false
+        required: false
+      # registrationUrl: .url().optional()
+      - name: registrationUrl
+        label: Registration URL (Google Form)
+        widget: string
+        required: false
+        pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+        hint: "Leave blank = 'registration not yet open'."
+      # venueChangeBanner: .optional()
+      - name: venueChangeBanner
+        label: Venue change notice
+        widget: string
+        required: false
+        hint: "Optional last-minute venue change banner shown on the event."
+      # summary: .optional()
+      - name: summary
+        label: Summary
+        widget: text
+        required: false
+      # featured: default false
+      - name: featured
+        label: Featured
+        widget: boolean
+        default: false
+        required: false
+      # Markdown body of the .md file
+      - name: body
+        label: Details (body)
+        widget: markdown
+        required: false
+
+  # ===========================================================================
+  # SPEAKERS  (mirrors `speakers` schema)
+  # ===========================================================================
+  - name: speakers
+    label: Speakers
+    label_singular: Speaker
+    folder: src/content/speakers
+    create: true
+    slug: "{{slug}}"
+    summary: "{{name}}"
+    fields:
+      - { name: name, label: Name, widget: string }
+      - { name: company, label: Company, widget: string, required: false }
+      - { name: designation, label: Designation, widget: string, required: false }
+      - name: photo
+        label: Photo
+        widget: image
+        required: false
+        hint: "Max 500KB, compress before upload."
+      # expertise: array default []
+      - name: expertise
+        label: Expertise tags
+        widget: list
+        required: false
+        default: []
+      # linkedin: .url().optional()
+      - name: linkedin
+        label: LinkedIn URL
+        widget: string
+        required: false
+        pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+      # pastSessions: array default []
+      - name: pastSessions
+        label: Past sessions
+        widget: list
+        required: false
+        default: []
+      - { name: keynote, label: Keynote speaker, widget: boolean, default: false, required: false }
+      # active: default true
+      - name: active
+        label: Active
+        widget: boolean
+        default: true
+        required: false
+        hint: "Turn OFF to retire a speaker without deleting history."
+      - { name: body, label: Bio (body), widget: markdown, required: false }
+
+  # ===========================================================================
+  # SPONSORS  (mirrors `sponsors` schema)
+  # ===========================================================================
+  - name: sponsors
+    label: Sponsors
+    label_singular: Sponsor
+    folder: src/content/sponsors
+    create: true
+    slug: "{{slug}}"
+    summary: "{{name}} ({{tier}})"
+    fields:
+      - { name: name, label: Name, widget: string }
+      # logo: required image (no .optional())
+      - name: logo
+        label: Logo
+        widget: image
+        hint: "Required. Max 500KB, compress before upload."
+      - name: tier
+        label: Tier
+        widget: select
+        options: ["platinum", "gold", "silver", "community", "partner"]
+      - name: url
+        label: Website URL
+        widget: string
+        required: false
+        pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+      - name: active
+        label: Active
+        widget: boolean
+        default: true
+        required: false
+        hint: "Turn OFF to hide a lapsed sponsor."
+      - { name: body, label: Notes (body), widget: markdown, required: false }
+
+  # ===========================================================================
+  # BLOG  (mirrors `blog` schema)
+  # ===========================================================================
+  - name: blog
+    label: Blog posts
+    label_singular: Blog post
+    folder: src/content/blog
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}} — {{date}}"
+    fields:
+      - { name: title, label: Title, widget: string }
+      - name: date
+        label: Publish date
+        widget: datetime
+        date_format: "YYYY-MM-DD"
+        time_format: "HH:mm"
+        format: "YYYY-MM-DDTHH:mm:ssZ"
+        hint: "Entered in IST."
+      - { name: author, label: Author, widget: string }
+      # tags: array default []
+      - name: tags
+        label: Tags
+        widget: list
+        required: false
+        default: []
+      - { name: category, label: Category, widget: string, required: false }
+      - { name: excerpt, label: Excerpt, widget: text, required: false }
+      - name: cover
+        label: Cover image
+        widget: image
+        required: false
+        hint: "Max 500KB, compress before upload."
+      # draft: default false
+      - name: draft
+        label: Draft
+        widget: boolean
+        default: false
+        required: false
+        hint: "ON keeps this post out of the published site."
+      - { name: body, label: Post (body), widget: markdown, required: false }
+
+  # ===========================================================================
+  # VOLUNTEER ROLES  (mirrors `volunteer` schema)
+  # ===========================================================================
+  - name: volunteer
+    label: Volunteer roles
+    label_singular: Volunteer role
+    folder: src/content/volunteer
+    create: true
+    slug: "{{slug}}"
+    summary: "{{role}}"
+    fields:
+      - { name: role, label: Role, widget: string }
+      # capacity: int positive default 1
+      - name: capacity
+        label: Capacity
+        widget: number
+        default: 1
+        value_type: int
+        min: 1
+        required: false
+        hint: "How many people are needed for this role (at least 1)."
+      # filledCount: int nonnegative default 0
+      - name: filledCount
+        label: Filled count
+        widget: number
+        default: 0
+        value_type: int
+        min: 0
+        required: false
+        hint: "How many slots are already taken."
+      # filled: default false
+      - name: filled
+        label: Filled
+        widget: boolean
+        default: false
+        required: false
+        hint: "ON hides the sign-up button."
+      - name: signupUrl
+        label: Sign-up URL
+        widget: string
+        required: false
+        pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+      - { name: summary, label: Summary, widget: text, required: false }
+      - { name: body, label: Details (body), widget: markdown, required: false }
+
+  # ===========================================================================
+  # COMMUNITY STORIES  (mirrors `community` schema)
+  # ===========================================================================
+  - name: community
+    label: Community stories
+    label_singular: Community story
+    folder: src/content/community
+    create: true
+    slug: "{{slug}}"
+    summary: "{{memberName}}"
+    fields:
+      - { name: memberName, label: Member name, widget: string }
+      - { name: role, label: Role, widget: string, required: false }
+      - name: photo
+        label: Photo
+        widget: image
+        required: false
+        hint: "Max 500KB, compress before upload. Only with member consent."
+      - name: linkedin
+        label: LinkedIn URL
+        widget: string
+        required: false
+        pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+      - { name: quote, label: Quote, widget: text, required: false }
+      # optInPublished: default false
+      - name: optInPublished
+        label: Opt-in published
+        widget: boolean
+        default: false
+        required: false
+        hint: "Only ON with explicit member consent. OFF keeps the story private."
+      - { name: body, label: Story (body), widget: markdown, required: false }
+
+  # ===========================================================================
+  # RESOURCES  (mirrors `resources` schema)
+  # ===========================================================================
+  - name: resources
+    label: Resources
+    label_singular: Resource
+    folder: src/content/resources
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}} ({{kind}})"
+    fields:
+      - { name: title, label: Title, widget: string }
+      - name: kind
+        label: Kind
+        widget: select
+        options: ["deck", "recording", "tableau-public", "download", "link"]
+      - name: url
+        label: URL
+        widget: string
+        required: false
+        pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+      # linkStatus: default 'active'
+      - name: linkStatus
+        label: Link status
+        widget: select
+        options: ["active", "expired", "broken"]
+        default: "active"
+        required: false
+        hint: "Set to expired/broken to show a safe fallback instead of a dead link."
+      - { name: category, label: Category, widget: string, required: false }
+      - { name: description, label: Description, widget: text, required: false }
+      - { name: body, label: Notes (body), widget: markdown, required: false }
+
+  # ===========================================================================
+  # SITE STATS  (file collection -> src/data/stats.yaml)
+  # Six stats; each is label / value / suffix.
+  # ===========================================================================
+  - name: stats
+    label: Home page stats
+    files:
+      - name: stats
+        label: Stats strip (6 numbers)
+        file: src/data/stats.yaml
+        description: "The six numbers shown on the home page stats strip."
+        fields:
+          - name: stats
+            label: Stats
+            label_singular: Stat
+            widget: list
+            fields:
+              - { name: label, label: Label, widget: string }
+              - { name: value, label: Value, widget: number, value_type: int, min: 0 }
+              - name: suffix
+                label: Suffix
+                widget: string
+                required: false
+                default: ""
+                hint: "e.g. '+' for 1200+. Leave blank for none."
+
+  # ===========================================================================
+  # SITE SETTINGS  (file collection -> src/data/site.yaml)
+  # Nav, socials, chat invites, form URLs, official chapter URL.
+  # ===========================================================================
+  - name: site
+    label: Site settings
+    files:
+      - name: site
+        label: Global site settings
+        file: src/data/site.yaml
+        description: "Nav links, social profiles, chat invites, form URLs, and the official chapter link."
+        fields:
+          - { name: name, label: Site name, widget: string }
+          - { name: shortName, label: Short name, widget: string }
+          - { name: tagline, label: Tagline, widget: text }
+          - name: nav
+            label: Navigation links
+            widget: list
+            fields:
+              - { name: label, label: Label, widget: string }
+              - { name: href, label: Link (href), widget: string, hint: "e.g. /events" }
+          - name: socials
+            label: Social profiles
+            widget: object
+            fields:
+              - name: linkedin
+                label: LinkedIn URL
+                widget: string
+                required: false
+                pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+              - name: instagram
+                label: Instagram URL
+                widget: string
+                required: false
+                pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+          - name: chatInvites
+            label: Chat invites
+            widget: object
+            hint: "Invite links expire — recheck monthly."
+            fields:
+              - { name: whatsapp, label: WhatsApp invite, widget: string, required: false }
+              - { name: slack, label: Slack invite, widget: string, required: false, default: "" }
+              - { name: discord, label: Discord invite, widget: string, required: false, default: "" }
+          - name: chatInvitesLastChecked
+            label: Chat invites last checked
+            widget: datetime
+            date_format: "YYYY-MM-DD"
+            time_format: false
+            format: "YYYY-MM-DD"
+            required: false
+            hint: "Date you last verified the chat invite links work."
+          - name: forms
+            label: Google Form / Sheet URLs
+            widget: object
+            fields:
+              - { name: contact, label: Contact form, widget: string }
+              - { name: rsvpDefault, label: Default RSVP form, widget: string }
+              - { name: sponsor, label: Sponsor form, widget: string }
+              - { name: newsletter, label: Newsletter form, widget: string }
+          - name: officialChapterUrl
+            label: Official Tableau chapter URL
+            widget: string
+            pattern: ['^https?://.+', "Must be a full URL starting with http(s)://"]
+            hint: "Required independence disclosure link (footer + About)."
+          - name: analytics
+            label: Analytics
+            widget: object
+            required: false
+            fields:
+              - { name: plausibleDomain, label: Plausible domain, widget: string, required: false }

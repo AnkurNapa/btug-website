@@ -1,0 +1,132 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+
+// Reporting channels. Update these to the group's real, monitored addresses.
+const reportEmail = 'conduct@btug.community';
+const reportFormUrl = 'https://docs.google.com/forms/d/e/REPLACE_CONDUCT_FORM/viewform';
+
+const expected = [
+  'Be welcoming and patient — assume good faith and remember everyone was a beginner once.',
+  'Be respectful of differing viewpoints, experience levels, tools, and lived experiences.',
+  'Give and accept constructive feedback gracefully; critique ideas, not people.',
+  'Use inclusive language and respect how people identify, including names and pronouns.',
+  'Make space for others to speak; credit people for their work and contributions.',
+  'Respect privacy — ask before sharing photos, datasets, or someone’s contact details.',
+];
+
+const unacceptable = [
+  'Harassment, intimidation, or discrimination in any form, online or in person.',
+  'Sexualized language or imagery, and unwelcome sexual attention or advances.',
+  'Demeaning, insulting, or derogatory comments, and personal or political attacks.',
+  'Public or private harassment, stalking, or following people between channels.',
+  'Publishing others’ private information (doxxing) without explicit consent.',
+  'Sustained disruption of talks, workshops, or online discussions.',
+  'Advocating for, or encouraging, any of the above behavior.',
+];
+---
+<BaseLayout
+  title="Code of Conduct"
+  description="The standards of behavior we expect at BTUG events and online, and how to report a concern confidentially."
+>
+  <section class="section" aria-labelledby="coc-heading">
+    <div class="wrap coc">
+      <SectionHeading
+        eyebrow="Community standards"
+        title="Code of Conduct"
+        lead="BTUG is a volunteer-run community built on respect. This applies to everyone — attendees, speakers, sponsors, volunteers, and organizers — at every in-person event, online session, and community channel we run."
+        id="coc-heading"
+      />
+
+      <h2 id="expected-heading">Expected behavior</h2>
+      <ul class="coc-list">
+        {expected.map((item) => <li class="card coc-item">{item}</li>)}
+      </ul>
+
+      <h2 id="unacceptable-heading">Unacceptable behavior</h2>
+      <ul class="coc-list">
+        {unacceptable.map((item) => <li class="card coc-item coc-bad">{item}</li>)}
+      </ul>
+
+      <aside class="card report" aria-labelledby="report-heading">
+        <h2 id="report-heading">Reporting a concern</h2>
+        <p>
+          If you experience or witness behavior that breaks this Code of Conduct,
+          please tell us. You do not need to be certain it was a violation — if
+          something felt wrong, we want to hear about it. Reports are handled
+          confidentially by the organizing team.
+        </p>
+
+        <div class="report-channels">
+          <div class="card report-channel">
+            <h3>Email the conduct team</h3>
+            <p>
+              Write to <a href={`mailto:${reportEmail}`}>{reportEmail}</a>, a private
+              inbox monitored by the core organizers. Include what happened, when
+              and where, who was involved, and any context or witnesses.
+            </p>
+          </div>
+          <div class="card report-channel">
+            <h3>Confidential form</h3>
+            <p>
+              Prefer not to email? Use the
+              <a href={reportFormUrl} rel="noopener" target="_blank">confidential reporting form</a>.
+              You may submit anonymously, though leaving a contact lets us follow up.
+            </p>
+          </div>
+        </div>
+
+        <h3 class="report-sub">What happens after you report</h3>
+        <ol class="report-steps">
+          <li><strong>Acknowledge.</strong> We aim to confirm we received your report within <strong>48 hours</strong>.</li>
+          <li><strong>Review.</strong> The conduct team reviews the report privately, gathers any needed context, and speaks with those involved as appropriate.</li>
+          <li><strong>Decide.</strong> We agree on a proportionate response — this can range from a private warning to removal from an event or a ban from future events and channels.</li>
+          <li><strong>Follow up.</strong> We tell the reporter what action was taken, while protecting the privacy of everyone involved.</li>
+        </ol>
+
+        <p class="report-commitment">
+          <strong>Our commitment:</strong> we will not name or retaliate against
+          anyone for reporting in good faith. Organizers who are themselves the
+          subject of a report will recuse from handling it. At an in-person event,
+          you can also approach any organizer wearing a volunteer badge for
+          immediate help.
+        </p>
+      </aside>
+
+      <p class="coc-credit">
+        Adapted from the spirit of the
+        <a href="https://www.contributor-covenant.org/" rel="noopener" target="_blank">Contributor Covenant</a>
+        for our community context.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .coc { display: grid; gap: var(--space-3); }
+  .coc h2 { font-size: var(--text-xl); margin-top: var(--space-4); }
+  .coc-list { list-style: none; padding: 0; display: grid; gap: var(--space-2); }
+  .coc-item { padding: var(--space-3) var(--space-4); border-left: 4px solid var(--color-success); }
+  .coc-item.coc-bad { border-left-color: var(--color-danger); }
+
+  .report { padding: var(--space-6); display: grid; gap: var(--space-3); border-left: 4px solid var(--color-accent); margin-top: var(--space-4); }
+  .report h2 { margin-top: 0; font-size: var(--text-xl); }
+  .report h3 { font-size: var(--text-lg); color: var(--color-brand-strong); }
+  .report-channels { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
+  .report-channel { padding: var(--space-4); display: grid; gap: 0.5rem; }
+  .report-sub { margin-top: var(--space-2); }
+  .report-steps { display: grid; gap: 0.6rem; padding-left: 1.2rem; color: var(--color-text-muted); }
+  .report-steps strong { color: var(--color-text); }
+  .report-commitment {
+    background: var(--color-brand-soft);
+    border-radius: var(--radius);
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-text-muted);
+  }
+  .report-commitment strong { color: var(--color-text); }
+  .coc-credit { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-3); }
+
+  @media (min-width: 720px) {
+    .report-channels { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>

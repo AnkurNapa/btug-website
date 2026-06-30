@@ -1,0 +1,73 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import ResourceCard from '../components/ResourceCard.astro';
+
+// All resources, grouped by category. linkStatus drives the dead-link fallback
+// inside ResourceCard (see tc-recap-recording.md — an EXPIRED recording that
+// renders a "contact organizers" note instead of a broken link).
+const all = await getCollection('resources');
+const resources = all.map((entry) => entry.data);
+
+const uncategorized = 'Other resources';
+const groups = new Map<string, typeof resources>();
+for (const r of resources) {
+  const key = r.category ?? uncategorized;
+  const list = groups.get(key) ?? [];
+  list.push(r);
+  groups.set(key, list);
+}
+const categories = [...groups.keys()].sort((a, b) => a.localeCompare(b));
+---
+<BaseLayout
+  title="Resources"
+  description="Slide decks, session recordings, sample dashboards and downloads from Bengaluru Tableau User Group events."
+>
+  <section class="section">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Learn at your pace"
+        title="Resource Library"
+        lead="Decks, recordings, and sample workbooks from past sessions. Links are maintained by organizers; anything that has expired shows a fallback so you never hit a dead end."
+      />
+
+      {categories.length > 0 ? (
+        categories.map((category) => (
+          <section class="resource-group" aria-labelledby={`cat-${category.replace(/\s+/g, '-').toLowerCase()}`}>
+            <h2 class="group-title" id={`cat-${category.replace(/\s+/g, '-').toLowerCase()}`}>
+              {category}
+            </h2>
+            <ul class="resource-grid">
+              {(groups.get(category) ?? []).map((r) => (
+                <li>
+                  <ResourceCard
+                    title={r.title}
+                    kind={r.kind}
+                    description={r.description}
+                    url={r.url}
+                    linkStatus={r.linkStatus}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      ) : (
+        <p class="empty">We're curating our first batch of resources. Check back after the next session.</p>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .resource-group { margin-bottom: var(--space-8); }
+  .group-title { font-size: var(--text-lg); margin-bottom: var(--space-4); }
+  .resource-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--space-4); grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .resource-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .resource-grid { grid-template-columns: repeat(3, 1fr); } }
+  .empty { color: var(--color-text-muted); }
+</style>

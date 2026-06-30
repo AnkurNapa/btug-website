@@ -1,0 +1,128 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import StatsStrip from '../components/StatsStrip.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import site from '../data/site.yaml';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Teaser: next 3 upcoming events with a future date, soonest first.
+const now = Date.now();
+const allEvents = await getCollection('events');
+const upcoming = allEvents
+  .filter((e: CollectionEntry<'events'>) => e.data.status === 'upcoming' && e.data.date.getTime() >= now)
+  .sort((a: CollectionEntry<'events'>, b: CollectionEntry<'events'>) => a.data.date.getTime() - b.data.date.getTime())
+  .slice(0, 3);
+
+const dateFmt = new Intl.DateTimeFormat('en-IN', {
+  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata',
+});
+
+const whatWeDo = [
+  { icon: '◆', title: 'Workshops', body: 'Hands-on, laptop-open sessions on calculations, LOD, performance and dashboard design.' },
+  { icon: '◇', title: 'Meetups', body: 'Regular community gatherings with speakers from across Bengaluru’s data ecosystem.' },
+  { icon: '◈', title: 'Hackathons', body: 'Time-boxed dashboard challenges that turn raw datasets into compelling data stories.' },
+  { icon: '▦', title: 'Conferences', body: 'Our flagship event bringing together keynotes, labs, AI sessions and a sponsor expo.' },
+];
+---
+<BaseLayout title={site.shortName} description={site.tagline}>
+  <Hero />
+  <StatsStrip />
+
+  <section class="section" aria-labelledby="what-we-do">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="What we do"
+        title="A community built to learn and grow together"
+        lead="BTUG runs year-round programming for analysts, BI developers and data enthusiasts across Bengaluru."
+        id="what-we-do"
+      />
+      <ul class="grid wwd-grid">
+        {whatWeDo.map((item) => (
+          <li class="card wwd-card">
+            <span class="wwd-icon" aria-hidden="true">{item.icon}</span>
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section-sunken" aria-labelledby="upcoming">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Mark your calendar"
+        title="Upcoming events"
+        lead="Three of our next sessions. See the full calendar for more."
+        id="upcoming"
+      />
+      {upcoming.length > 0 ? (
+        <ul class="grid events-grid">
+          {upcoming.map((event: CollectionEntry<'events'>) => (
+            <li class="card event-card">
+              <div class="event-meta">
+                <span class="pill pill-success">{event.data.type}</span>
+                <time datetime={event.data.date.toISOString()}>{dateFmt.format(event.data.date)} IST</time>
+              </div>
+              <h3>{event.data.name}</h3>
+              <p class="event-venue">{event.data.venue}</p>
+              {event.data.summary && <p>{event.data.summary}</p>}
+              <a class="event-link" href={`${base}/events`}>Event details &rarr;</a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="lead">No upcoming events are published yet. Check back soon or join our newsletter to be the first to know.</p>
+      )}
+      <p class="events-all"><a class="btn btn-secondary" href={`${base}/events`}>View all events</a></p>
+    </div>
+  </section>
+
+  <section class="section cta-band" aria-labelledby="home-cta">
+    <div class="wrap cta-inner">
+      <h2 id="home-cta">Become part of Bengaluru's data community</h2>
+      <p>Join 1,200+ members learning, sharing and building with Tableau and modern analytics.</p>
+      <div class="cta-actions">
+        <a class="btn btn-primary" href={site.forms?.newsletter || `${base}/contact`}>Join BTUG</a>
+        <a class="btn btn-secondary cta-btn-light" href={`${base}/conference`}>Explore the conference</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .grid { list-style: none; padding: 0; display: grid; gap: var(--space-4); }
+  .section-sunken { background: var(--color-surface-sunken); }
+
+  .wwd-grid { grid-template-columns: 1fr; }
+  .wwd-card { padding: var(--space-4); display: grid; gap: 0.5rem; align-content: start; }
+  .wwd-icon { font-size: var(--text-lg); color: var(--color-brand); }
+  .wwd-card h3 { font-size: var(--text-lg); }
+  .wwd-card p { color: var(--color-text-muted); }
+
+  .events-grid { grid-template-columns: 1fr; }
+  .event-card { padding: var(--space-4); display: grid; gap: 0.6rem; align-content: start; }
+  .event-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .event-card h3 { font-size: var(--text-lg); }
+  .event-venue { font-weight: 500; color: var(--color-text); }
+  .event-link { font-weight: 600; text-decoration: none; }
+  .events-all { margin-top: var(--space-4); }
+
+  .cta-band { background: var(--gradient-brand); color: #fff; }
+  .cta-inner { display: grid; gap: var(--space-3); justify-items: start; max-width: 48ch; }
+  .cta-inner h2 { font-size: var(--text-xl); color: #fff; }
+  .cta-actions { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: var(--space-2); }
+  .cta-btn-light { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.6); }
+
+  @media (min-width: 720px) {
+    .wwd-grid { grid-template-columns: repeat(2, 1fr); }
+    .events-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .wwd-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>

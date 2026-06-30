@@ -1,0 +1,178 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+
+// Gallery — photos and video from past events. Images use loading="lazy" with
+// explicit width/height (no layout shift) and are referenced from
+// /images/gallery/*.jpg, which organizers should export at ~1280px and compress
+// for slow connections. The lightbox is pure CSS (:target) — no JS required.
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+type Shot = {
+  id: string;
+  src: string;
+  alt: string;
+  caption: string;
+  type: 'photo' | 'video';
+  videoUrl?: string;
+};
+
+const gallery: Shot[] = [
+  {
+    id: 'kickoff-room',
+    src: '/images/gallery/jan-kickoff-room.jpg',
+    alt: 'A full lecture hall at IIM Bangalore with around fifty attendees facing a presenter and a Tableau dashboard on the projector during the January kickoff.',
+    caption: 'January kickoff — a packed room of first-time Tableau users at IIM Bangalore.',
+    type: 'photo',
+  },
+  {
+    id: 'prep-workshop',
+    src: '/images/gallery/prep-workshop-hands-on.jpg',
+    alt: 'Attendees seated at laptops working through a Tableau Prep flow, with two volunteers leaning in to help at a hands-on workshop.',
+    caption: 'Hands-on Tableau Prep workshop — building data flows together.',
+    type: 'photo',
+  },
+  {
+    id: 'viz-clinic',
+    src: '/images/gallery/viz-clinic-feedback.jpg',
+    alt: 'A presenter standing beside a projected dashboard giving live feedback while seated attendees watch during a viz clinic.',
+    caption: 'Viz clinic — live dashboard critiques and redesigns.',
+    type: 'photo',
+  },
+  {
+    id: 'speaker-talk',
+    src: '/images/gallery/ai-analytics-talk.jpg',
+    alt: 'A speaker at a podium presenting a slide titled AI for Analytics to an attentive audience at an evening meetup.',
+    caption: 'AI for Analytics meetup — exploring Tableau Pulse and Einstein.',
+    type: 'video',
+    videoUrl: 'https://www.youtube.com/watch?v=BTUGaiAnalytics',
+  },
+  {
+    id: 'networking',
+    src: '/images/gallery/networking-break.jpg',
+    alt: 'Attendees standing in small groups with coffee cups, talking and laughing during a networking break between sessions.',
+    caption: 'Networking break — where the best conversations happen.',
+    type: 'photo',
+  },
+  {
+    id: 'group-photo',
+    src: '/images/gallery/community-group-photo.jpg',
+    alt: 'A large group of about forty BTUG members posing together for a group photo on a staircase, smiling at the camera.',
+    caption: 'The BTUG community — thank you for an incredible season.',
+    type: 'photo',
+  },
+];
+---
+<BaseLayout
+  title="Gallery"
+  description="Photos and video from past Bengaluru Tableau User Group meetups, workshops, and conferences."
+>
+  <section class="section">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Moments from BTUG"
+        title="Event Gallery"
+        lead="A look back at our meetups, workshops, and clinics."
+      />
+
+      <p class="note" role="note">
+        Images are compressed and lazy-loaded for fast viewing on slow or mobile
+        connections. Select any photo to enlarge it.
+      </p>
+
+      <ul class="gallery-grid">
+        {gallery.map((shot) => (
+          <li class="gallery-item">
+            <a class="thumb" href={`#${shot.id}`} aria-label={`Enlarge: ${shot.caption}`}>
+              <img
+                src={`${base}${shot.src}`}
+                alt={shot.alt}
+                width="800"
+                height="600"
+                loading="lazy"
+                decoding="async"
+              />
+              {shot.type === 'video' && <span class="play-badge" aria-hidden="true">▶ Video</span>}
+            </a>
+            <p class="caption">{shot.caption}</p>
+
+            {/* CSS-only lightbox target. */}
+            <div class="lightbox" id={shot.id} role="dialog" aria-label={shot.caption}>
+              <a class="lightbox-close" href="#" aria-label="Close enlarged image">×</a>
+              <figure class="lightbox-figure">
+                <img
+                  src={`${base}${shot.src}`}
+                  alt={shot.alt}
+                  width="1280"
+                  height="960"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <figcaption>
+                  {shot.caption}
+                  {shot.type === 'video' && shot.videoUrl && (
+                    <>
+                      {' '}
+                      <a href={shot.videoUrl} rel="noopener noreferrer" target="_blank">
+                        Watch the recording
+                        <span class="visually-hidden">(opens in a new tab)</span>
+                      </a>
+                    </>
+                  )}
+                </figcaption>
+              </figure>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .note { color: var(--color-text-muted); font-size: var(--text-sm); margin-bottom: var(--space-6); }
+
+  .gallery-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--space-4); grid-template-columns: 1fr;
+  }
+  @media (min-width: 560px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .gallery-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .thumb {
+    position: relative; display: block; overflow: hidden;
+    border-radius: var(--radius); border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+  .thumb img { aspect-ratio: 4 / 3; object-fit: cover; transition: transform var(--duration-normal) var(--ease-out-expo); }
+  .thumb:hover img { transform: scale(1.04); }
+  .play-badge {
+    position: absolute; left: 0.6rem; bottom: 0.6rem;
+    background: oklch(22% 0.03 255 / 0.78); color: #fff;
+    font-size: var(--text-sm); font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px;
+  }
+  .caption { margin-top: var(--space-1); font-size: var(--text-sm); color: var(--color-text-muted); }
+
+  /* CSS-only lightbox: hidden until its #id is the URL target. */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 200;
+    display: none; place-items: center;
+    padding: var(--space-4);
+    background: oklch(18% 0.02 255 / 0.82);
+  }
+  .lightbox:target { display: grid; }
+  .lightbox-figure {
+    max-width: min(64rem, 100%); max-height: 90vh; overflow: auto;
+    background: var(--color-surface-raised); border-radius: var(--radius-lg);
+    padding: var(--space-3);
+  }
+  .lightbox-figure img { border-radius: var(--radius); }
+  .lightbox-figure figcaption { margin-top: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .lightbox-close {
+    position: absolute; top: 1rem; right: 1.25rem;
+    width: 2.5rem; height: 2.5rem; display: grid; place-items: center;
+    font-size: 1.6rem; line-height: 1; text-decoration: none;
+    background: var(--color-surface-raised); color: var(--color-text);
+    border-radius: 999px; box-shadow: var(--shadow);
+  }
+</style>

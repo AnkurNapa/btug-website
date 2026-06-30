@@ -1,0 +1,20 @@
+# Home page stats strip — single source of truth.
+# Edit these numbers in Decap CMS; no layout code changes needed.
+- label: Members
+  value: 1200
+  suffix: "+"
+- label: Events Conducted
+  value: 48
+  suffix: ""
+- label: Speakers
+  value: 65
+  suffix: "+"
+- label: Companies Represented
+  value: 90
+  suffix: "+"
+- label: Volunteer Leaders
+  value: 22
+  suffix: ""
+- label: Learning Sessions
+  value: 110
+  suffix: "+"

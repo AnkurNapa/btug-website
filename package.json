@@ -1,0 +1,21 @@
+{
+  "name": "btug-website",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Bengaluru Tableau User Group community website",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^5.2.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@rollup/plugin-yaml": "^4.1.2",
+    "typescript": "^5.7.0"
+  }
+}

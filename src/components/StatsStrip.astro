@@ -1,0 +1,54 @@
+---
+import stats from '../data/stats.yaml';
+
+interface Stat {
+  label: string;
+  value: number;
+  suffix?: string;
+}
+const items = stats as Stat[];
+const formatter = new Intl.NumberFormat('en-IN');
+---
+<section class="stats" aria-label="BTUG community by the numbers">
+  <ul class="wrap stats-list">
+    {items.map((stat) => (
+      <li class="stat card">
+        <span class="stat-value">
+          {formatter.format(stat.value)}{stat.suffix}
+        </span>
+        <span class="stat-label">{stat.label}</span>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  .stats { padding-block: var(--space-6); background: var(--color-surface-sunken); }
+  .stats-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stat {
+    display: grid;
+    gap: 0.25rem;
+    padding: var(--space-4);
+    text-align: center;
+  }
+  .stat-value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xl);
+    line-height: 1;
+    color: var(--color-brand-strong);
+  }
+  .stat-label {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+  @media (min-width: 640px) { .stats-list { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 980px) { .stats-list { grid-template-columns: repeat(6, 1fr); } }
+</style>

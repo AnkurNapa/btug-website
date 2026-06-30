@@ -1,0 +1,67 @@
+---
+// ResourceCard — renders a single learning resource.
+// EDGE CASE (link rot): a static site cannot re-check external links, so an
+// organizer marks `linkStatus` in the resource frontmatter. Only 'active'
+// renders a working link; 'expired' / 'broken' render a muted fallback message
+// instead of a dead <a>, so members never hit a 404.
+type ResourceKind = 'deck' | 'recording' | 'tableau-public' | 'download' | 'link';
+type LinkStatus = 'active' | 'expired' | 'broken';
+
+interface Props {
+  title: string;
+  kind: ResourceKind;
+  description?: string;
+  url?: string;
+  linkStatus?: LinkStatus;
+}
+
+const { title, kind, description, url, linkStatus = 'active' } = Astro.props;
+
+const kindMeta: Record<ResourceKind, { label: string; cta: string }> = {
+  deck: { label: 'Slide deck', cta: 'Open slides' },
+  recording: { label: 'Recording', cta: 'Watch recording' },
+  'tableau-public': { label: 'Tableau Public', cta: 'View on Tableau Public' },
+  download: { label: 'Download', cta: 'Download file' },
+  link: { label: 'Link', cta: 'Open link' },
+};
+
+const meta = kindMeta[kind];
+const isActive = linkStatus === 'active' && Boolean(url);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const contactHref = `${base}/contact`;
+---
+<article class="card resource">
+  <header class="resource-head">
+    <span class="pill pill-muted">{meta.label}</span>
+    {!isActive && <span class="pill pill-warning">Unavailable</span>}
+  </header>
+
+  <h3 class="resource-title">{title}</h3>
+  {description && <p class="resource-desc">{description}</p>}
+
+  {isActive ? (
+    <a class="btn btn-secondary resource-cta" href={url} rel="noopener noreferrer" target="_blank">
+      {meta.cta}
+      <span class="visually-hidden">(opens in a new tab)</span>
+    </a>
+  ) : (
+    <p class="resource-fallback" role="note">
+      This {meta.label.toLowerCase()} is no longer available — please
+      <a href={contactHref}> contact the organizers</a> for a copy.
+    </p>
+  )}
+</article>
+
+<style>
+  .resource { display: grid; gap: var(--space-2); padding: var(--space-4); height: 100%; align-content: start; }
+  .resource:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .resource-head { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+  .resource-title { font-size: var(--text-lg); }
+  .resource-desc { color: var(--color-text-muted); }
+  .resource-cta { align-self: start; margin-top: var(--space-1); }
+  .resource-fallback {
+    margin-top: var(--space-1); padding: var(--space-2) var(--space-3);
+    background: var(--color-surface-sunken); border-radius: var(--radius-sm);
+    color: var(--color-text-muted); font-size: var(--text-sm);
+  }
+</style>

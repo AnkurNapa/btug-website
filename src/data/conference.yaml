@@ -1,0 +1,68 @@
+# Flagship BTUG conference — single source of truth for /conference.
+# Edit dates, speakers and agenda here; the page renders from these fields.
+theme: "Data Stories, Reimagined: Analytics in the Age of AI"
+tagline: Bengaluru's largest community-led Tableau and analytics gathering.
+date: 2026-09-19T09:00:00+05:30
+endDate: 2026-09-19T18:00:00+05:30
+registrationUrl: https://docs.google.com/forms/d/e/REPLACE_CONFERENCE_FORM/viewform
+
+venue:
+  name: "Bangalore International Exhibition Centre (BIEC)"
+  address: "10th Mile, Tumkur Road, Madavara Post, Bengaluru, Karnataka 562123"
+  city: Bengaluru
+  mapUrl: https://maps.google.com/?q=Bangalore+International+Exhibition+Centre
+
+keynoteSpeakers:
+  - name: Priya Raghunathan
+    title: Head of Analytics, FinScale
+    topic: "From Dashboards to Decisions: Scaling a Data Culture"
+  - name: Arjun Mehta
+    title: Principal Data Visualization Engineer
+    topic: "Designing for Insight: Visual Best Practices that Scale"
+  - name: Dr. Lakshmi Venkat
+    title: Director of AI, NovaLabs
+    topic: "Augmented Analytics: Where AI Meets Self-Service BI"
+
+tracks:
+  - name: Hands-On Labs
+    description: Build along in guided, laptop-open sessions on calculations, LOD expressions and performance tuning.
+  - name: Workshops
+    description: Deep-dive working sessions on data storytelling, dashboard design systems and governance.
+  - name: AI Sessions
+    description: Practical talks on Tableau Pulse, Einstein Copilot, and bringing GenAI into the analytics workflow.
+
+dashboardCompetition:
+  title: BTUG Dashboard Showdown
+  description: A live competition where finalists build and present a dashboard from a surprise dataset, judged by community leaders.
+  prize: Winner spotlight, a speaking slot at a future meetup, and partner-sponsored goodies.
+
+networkingLounge:
+  title: Networking Lounge
+  description: An open space for #DataFam connections — meet speakers, recruiters and fellow analysts over chai between sessions.
+
+sponsorExpo:
+  title: Sponsor Expo
+  description: Explore booths from analytics platforms, consultancies and hiring partners shaping Bengaluru's data ecosystem.
+
+agenda:
+  - time: "09:00"
+    title: Registration & Welcome Chai
+  - time: "09:45"
+    title: "Opening Keynote: From Dashboards to Decisions"
+    speaker: Priya Raghunathan
+  - time: "10:45"
+    title: "Hands-On Lab: Mastering LOD Expressions"
+  - time: "11:45"
+    title: "Workshop: Data Storytelling that Lands"
+    speaker: Arjun Mehta
+  - time: "13:00"
+    title: Lunch & Sponsor Expo
+  - time: "14:00"
+    title: "AI Session: Augmented Analytics in Practice"
+    speaker: Dr. Lakshmi Venkat
+  - time: "15:15"
+    title: "BTUG Dashboard Showdown — Live Finals"
+  - time: "16:30"
+    title: Networking Lounge & Community Awards
+  - time: "17:30"
+    title: Closing Remarks

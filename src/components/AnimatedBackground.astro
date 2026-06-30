@@ -1,0 +1,89 @@
+---
+// CSS-only decorative motif: a data grid + drifting "node network" plus a
+// faint Bangalore skyline silhouette. No JS, no canvas. Animates only
+// transform/opacity (compositor-friendly). Reduced-motion handled globally in
+// tokens.css; kept lightweight for low-bandwidth users.
+---
+<div class="bg" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-nodes">
+    <span class="node node-1"></span>
+    <span class="node node-2"></span>
+    <span class="node node-3"></span>
+    <span class="node node-4"></span>
+    <span class="node node-5"></span>
+  </div>
+  <div class="bg-skyline"></div>
+</div>
+
+<style>
+  .bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Dashboard grid — a static repeating data plane that very slowly drifts. */
+  .bg-grid {
+    position: absolute;
+    inset: -10%;
+    background-image:
+      linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+    background-size: 3.2rem 3.2rem;
+    opacity: 0.5;
+    mask-image: radial-gradient(120% 90% at 30% 0%, #000 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(120% 90% at 30% 0%, #000 0%, transparent 75%);
+    animation: gridDrift 40s linear infinite;
+    will-change: transform;
+  }
+
+  /* Data network — pulsing nodes evoking connected dashboards. */
+  .bg-nodes { position: absolute; inset: 0; }
+  .node {
+    position: absolute;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 50%;
+    background: var(--color-brand);
+    box-shadow: 0 0 0 6px oklch(55% 0.16 255 / 0.12);
+    opacity: 0.35;
+    will-change: transform, opacity;
+  }
+  .node-1 { top: 18%; left: 12%; animation: float 9s ease-in-out infinite; }
+  .node-2 { top: 30%; left: 78%; background: var(--color-accent); box-shadow: 0 0 0 6px oklch(72% 0.17 55 / 0.14); animation: float 11s ease-in-out infinite 1s; }
+  .node-3 { top: 62%; left: 24%; animation: float 13s ease-in-out infinite 0.5s; }
+  .node-4 { top: 48%; left: 58%; animation: float 10s ease-in-out infinite 2s; }
+  .node-5 { top: 72%; left: 88%; background: var(--color-accent); box-shadow: 0 0 0 6px oklch(72% 0.17 55 / 0.14); animation: float 12s ease-in-out infinite 1.5s; }
+
+  /* Bangalore skyline — a faint repeating silhouette anchored to the bottom. */
+  .bg-skyline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 28%;
+    opacity: 0.06;
+    background:
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) bottom left / 8% 55% no-repeat,
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) 14% bottom / 6% 80% no-repeat,
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) 24% bottom / 9% 40% no-repeat,
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) 36% bottom / 5% 95% no-repeat,
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) 46% bottom / 10% 60% no-repeat,
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) 60% bottom / 6% 75% no-repeat,
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) 70% bottom / 8% 45% no-repeat,
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) 82% bottom / 5% 88% no-repeat,
+      linear-gradient(var(--color-brand-strong), var(--color-brand-strong)) 90% bottom / 9% 55% no-repeat;
+  }
+
+  @keyframes gridDrift {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-3.2rem, -3.2rem, 0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.3; }
+    50% { transform: translate3d(0, -14px, 0); opacity: 0.55; }
+  }
+</style>

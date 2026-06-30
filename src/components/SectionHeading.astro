@@ -1,0 +1,20 @@
+---
+// Reusable section heading: optional eyebrow, required title, optional lead.
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lead?: string;
+  id?: string;
+}
+const { eyebrow, title, lead, id } = Astro.props;
+---
+<div class="section-heading">
+  {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+  <h2 id={id}>{title}</h2>
+  {lead && <p class="lead">{lead}</p>}
+</div>
+
+<style>
+  .section-heading { display: grid; gap: 0.6rem; max-width: 56ch; margin-bottom: var(--space-6); }
+  .section-heading h2 { font-size: var(--text-xl); }
+</style>

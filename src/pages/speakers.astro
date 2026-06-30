@@ -1,0 +1,137 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import SpeakerCard from '../components/SpeakerCard.astro';
+
+// Only active speakers. A cancelled/replaced speaker (active:false) is filtered
+// out here and simply never appears — no broken layout, no empty card.
+const all = await getCollection('speakers');
+// Keep the entry (so we retain `slug` for anchor links from event pages) but
+// filter to active speakers only — a cancelled/replaced speaker (active:false)
+// is filtered out here and simply never appears.
+const speakers = all.filter((entry) => entry.data.active);
+
+// Keynote speakers first, then the rest (stable within each group).
+const ordered = [
+  ...speakers.filter((entry) => entry.data.keynote),
+  ...speakers.filter((entry) => !entry.data.keynote),
+];
+
+// Build the unique, sorted expertise list for the filter chips.
+const expertiseSet = new Set<string>();
+for (const entry of ordered) {
+  for (const tag of entry.data.expertise) expertiseSet.add(tag);
+}
+const expertiseTags = [...expertiseSet].sort((a, b) => a.localeCompare(b));
+---
+<BaseLayout
+  title="Speakers"
+  description="Meet the speakers, mentors and community leaders sharing their expertise with the Bengaluru Tableau User Group."
+>
+  <section class="section">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Voices of BTUG"
+        title="Speakers & Mentors"
+        lead="Analysts, BI developers and data leaders who share their craft at our meetups, workshops and the annual conference."
+      />
+
+      {expertiseTags.length > 0 && (
+        <div class="filter" role="group" aria-label="Filter speakers by expertise">
+          <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">
+            All
+          </button>
+          {expertiseTags.map((tag) => (
+            <button class="chip" type="button" data-filter={tag} aria-pressed="false">
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {ordered.length > 0 ? (
+        <ul class="speaker-grid" id="speaker-grid">
+          {ordered.map((entry) => (
+            <li
+              class="speaker-grid-item"
+              id={entry.slug}
+              style="scroll-margin-top: 6rem"
+              data-expertise={entry.data.expertise.join('|')}
+            >
+              <SpeakerCard speaker={entry.data} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="empty">Our speaker line-up for the next season is being finalised. Check back soon.</p>
+      )}
+
+      <p class="filter-empty" id="filter-empty" hidden>
+        No speakers match that expertise yet.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .filter {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    margin-bottom: var(--space-6);
+  }
+  .chip {
+    font: inherit; font-size: var(--text-sm); font-weight: 600;
+    padding: 0.4rem 0.9rem; border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-raised); color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+  }
+  .chip:hover { border-color: var(--color-brand); color: var(--color-brand-strong); }
+  .chip.is-active {
+    background: var(--gradient-brand); color: #fff; border-color: transparent;
+  }
+  .speaker-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--space-4);
+    grid-template-columns: 1fr;
+  }
+  .speaker-grid-item[hidden] { display: none; }
+  .empty, .filter-empty { color: var(--color-text-muted); }
+  @media (min-width: 640px) {
+    .speaker-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1000px) {
+    .speaker-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+
+<script>
+  // Progressive enhancement: filtering works only as an upgrade. Without JS,
+  // every speaker stays visible.
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
+  const items = Array.from(document.querySelectorAll<HTMLLIElement>('.speaker-grid-item'));
+  const emptyMsg = document.getElementById('filter-empty');
+
+  function applyFilter(filter: string) {
+    let visible = 0;
+    for (const item of items) {
+      const tags = (item.dataset.expertise ?? '').split('|');
+      const show = filter === 'all' || tags.includes(filter);
+      item.hidden = !show;
+      if (show) visible++;
+    }
+    if (emptyMsg) emptyMsg.hidden = visible !== 0;
+  }
+
+  for (const chip of chips) {
+    chip.addEventListener('click', () => {
+      for (const c of chips) {
+        const active = c === chip;
+        c.classList.toggle('is-active', active);
+        c.setAttribute('aria-pressed', String(active));
+      }
+      applyFilter(chip.dataset.filter ?? 'all');
+    });
+  }
+</script>

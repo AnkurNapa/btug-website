@@ -1,0 +1,117 @@
+---
+// SpeakerCard — renders a single speaker profile.
+// Privacy/edit safety: callers should already filter active===true, but we
+// guard here too so a cancelled speaker (active:false) never renders even if
+// passed in by mistake. All optional fields are optional-chained.
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  speaker: CollectionEntry<'speakers'>['data'];
+}
+
+const { speaker } = Astro.props;
+
+// Defensive: never render an inactive (cancelled/replaced) speaker.
+const isActive = speaker?.active ?? true;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const photoSrc = speaker?.photo
+  ? (speaker.photo.startsWith('http') ? speaker.photo : `${base}${speaker.photo}`)
+  : undefined;
+
+const expertise = speaker?.expertise ?? [];
+const pastSessions = speaker?.pastSessions ?? [];
+const isKeynote = speaker?.keynote ?? false;
+---
+{isActive && (
+  <article class="speaker-card card" data-expertise={expertise.join('|')}>
+    <div class="speaker-head">
+      {photoSrc ? (
+        <img
+          class="speaker-photo"
+          src={photoSrc}
+          alt={`Photo of ${speaker.name}`}
+          width="72"
+          height="72"
+          loading="lazy"
+        />
+      ) : (
+        <div class="speaker-photo speaker-photo--placeholder" aria-hidden="true">
+          {speaker?.name?.charAt(0) ?? '?'}
+        </div>
+      )}
+      <div class="speaker-id">
+        <div class="speaker-name-row">
+          <h3 class="speaker-name">{speaker.name}</h3>
+          {isKeynote && <span class="pill pill-success">Keynote</span>}
+        </div>
+        {(speaker?.designation || speaker?.company) && (
+          <p class="speaker-meta">
+            {speaker?.designation}
+            {speaker?.designation && speaker?.company && ' · '}
+            {speaker?.company}
+          </p>
+        )}
+      </div>
+    </div>
+
+    {expertise.length > 0 && (
+      <ul class="speaker-tags" aria-label="Areas of expertise">
+        {expertise.map((tag) => <li class="pill pill-muted">{tag}</li>)}
+      </ul>
+    )}
+
+    {pastSessions.length > 0 && (
+      <div class="speaker-sessions">
+        <p class="speaker-sessions-label">Past sessions</p>
+        <ul>
+          {pastSessions.map((session) => <li>{session}</li>)}
+        </ul>
+      </div>
+    )}
+
+    {speaker?.linkedin && (
+      <a class="speaker-link" href={speaker.linkedin} target="_blank" rel="noopener noreferrer">
+        LinkedIn
+        <span class="visually-hidden"> profile of {speaker.name} (opens in a new tab)</span>
+      </a>
+    )}
+  </article>
+)}
+
+<style>
+  .speaker-card {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    align-content: start;
+  }
+  .speaker-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .speaker-head { display: flex; gap: var(--space-3); align-items: center; }
+  .speaker-photo {
+    width: 72px; height: 72px; border-radius: 999px; object-fit: cover;
+    border: 2px solid var(--color-border); flex-shrink: 0;
+  }
+  .speaker-photo--placeholder {
+    display: grid; place-items: center; background: var(--color-brand-soft);
+    color: var(--color-brand-strong); font-family: var(--font-display);
+    font-size: var(--text-lg); font-weight: 700; text-transform: uppercase;
+  }
+  .speaker-id { min-width: 0; }
+  .speaker-name-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .speaker-name { font-size: var(--text-lg); }
+  .speaker-meta { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .speaker-tags {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+  }
+  .speaker-sessions-label {
+    font-size: var(--text-sm); font-weight: 600; color: var(--color-text-muted);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem;
+  }
+  .speaker-sessions ul { margin: 0; padding-left: 1.1rem; color: var(--color-text-muted); font-size: var(--text-sm); }
+  .speaker-link {
+    font-weight: 600; font-size: var(--text-sm); color: var(--color-brand-strong);
+    justify-self: start;
+  }
+</style>

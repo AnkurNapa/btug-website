@@ -1,0 +1,74 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import CommunityCard from '../components/CommunityCard.astro';
+
+// PRIVACY: only ever surface stories where optInPublished===true. We filter
+// here AND the card re-checks the gate, so a non-consenting member's story can
+// never leak onto this public, permanent site.
+const all = await getCollection('community');
+const stories = all
+  .map((entry) => entry.data)
+  .filter((m) => m.optInPublished === true);
+---
+<BaseLayout
+  title="Community"
+  description="Member stories, spotlights and success stories from the Bengaluru Tableau User Group — shared with permission."
+>
+  <section class="section">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="People of BTUG"
+        title="Community Stories"
+        lead="The real measure of BTUG is its members — the careers grown, dashboards shipped and friendships made. Here are a few of their stories."
+      />
+
+      {stories.length > 0 ? (
+        <ul class="community-grid">
+          {stories.map((member) => (
+            <li><CommunityCard member={member} /></li>
+          ))}
+        </ul>
+      ) : (
+        <p class="empty">
+          We are gathering member stories. If BTUG has helped your data journey,
+          we would love to feature you — with your permission.
+        </p>
+      )}
+
+      <aside class="optin-note" aria-label="About these stories">
+        <h2 class="optin-title">Published by opt-in only</h2>
+        <p>
+          Every story here appears because the member explicitly asked us to
+          share it. We never publish a name, photo or LinkedIn profile without
+          consent. Want yours featured — or removed? Just reach out and we will
+          update it.
+        </p>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .community-grid {
+    list-style: none; margin: 0 0 var(--space-6); padding: 0;
+    display: grid; gap: var(--space-4); grid-template-columns: 1fr;
+  }
+  .empty { color: var(--color-text-muted); margin-bottom: var(--space-6); max-width: 60ch; }
+  .optin-note {
+    background: var(--color-surface-sunken);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+    display: grid; gap: 0.5rem;
+  }
+  .optin-title { font-size: var(--text-base); font-family: var(--font-display); }
+  .optin-note p { color: var(--color-text-muted); font-size: var(--text-sm); max-width: 70ch; }
+  @media (min-width: 640px) {
+    .community-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1000px) {
+    .community-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>

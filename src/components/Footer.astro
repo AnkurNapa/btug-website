@@ -1,0 +1,52 @@
+---
+import site from '../data/site.yaml';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const year = 2026;
+---
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <p class="footer-brand">{site.name}</p>
+      <p class="footer-tag">{site.tagline}</p>
+    </div>
+    <nav aria-label="Footer navigation" class="footer-nav">
+      {site.nav.map((item: { label: string; href: string }) => (
+        <a href={item.href === '/' ? base + '/' : base + item.href}>{item.label}</a>
+      ))}
+    </nav>
+    <div class="footer-social">
+      {site.socials.linkedin && <a href={site.socials.linkedin}>LinkedIn</a>}
+      {site.socials.instagram && <a href={site.socials.instagram}>Instagram</a>}
+      <a href={base + '/code-of-conduct'}>Code of Conduct</a>
+    </div>
+  </div>
+
+  <!-- Required independence disclosure (§6). -->
+  <div class="wrap disclosure" role="note">
+    <p>
+      <strong>Independent community site.</strong> BTUG.community is a volunteer-run site for the
+      Bengaluru Tableau User Group. It is <em>not</em> operated by Salesforce/Tableau and is
+      independent of the official Tableau-hosted chapter page at
+      <a href={site.officialChapterUrl}>usergroups.tableau.com</a>, which remains the official
+      channel for chapter membership. Tableau is a trademark of Salesforce, Inc.
+    </p>
+  </div>
+
+  <div class="wrap footer-legal">
+    <p>© {year} {site.shortName} community volunteers.</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer { background: var(--color-surface-sunken); border-top: 1px solid var(--color-border); padding-block: var(--space-6) var(--space-4); margin-top: var(--space-section); }
+  .footer-grid { display: grid; gap: var(--space-4); grid-template-columns: 1.4fr 1fr 0.8fr; align-items: start; }
+  .footer-brand { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); }
+  .footer-tag { color: var(--color-text-muted); max-width: 32ch; margin-top: 0.4rem; }
+  .footer-nav, .footer-social { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+  .footer-nav a, .footer-social a { color: var(--color-text-muted); text-decoration: none; font-size: var(--text-sm); }
+  .footer-nav a:hover, .footer-social a:hover { color: var(--color-text); }
+  .disclosure { margin-top: var(--space-6); padding: 1rem 1.25rem; background: var(--color-brand-soft); border: 1px solid var(--color-border); border-radius: var(--radius); font-size: var(--text-sm); color: var(--color-text-muted); }
+  .disclosure strong { color: var(--color-text); }
+  .footer-legal { margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--text-sm); }
+  @media (max-width: 720px) { .footer-grid { grid-template-columns: 1fr; } }
+</style>

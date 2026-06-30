@@ -1,0 +1,324 @@
+---
+// One-page promotional landing for the flagship August event.
+// Pulls the real event from the content collection so the date/venue/seats stay
+// in sync with the CMS — no duplicated copy. Uses a focused, single-purpose
+// chrome (slim header, no full nav) to drive registration.
+import { getEntry } from 'astro:content';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import AnimatedBackground from '../components/AnimatedBackground.astro';
+import Countdown from '../components/Countdown.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+import Footer from '../components/Footer.astro';
+import site from '../data/site.yaml';
+import {
+  registrationState,
+  registrationLabel,
+  seatsRemaining,
+  formatIST,
+} from '../lib/eventState.ts';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const event = await getEntry('events', 'prep-workshop-aug');
+// Fail the build loudly if the promo event is renamed/removed in the CMS, so the
+// landing page never silently falls back to a broken state.
+if (!event) {
+  throw new Error('Landing page event "prep-workshop-aug" was not found in the events collection.');
+}
+const { data } = event;
+const speaker = data.speaker ? await getEntry('speakers', data.speaker) : undefined;
+const { Content } = await event.render();
+
+const state = registrationState(event);
+const canRegister = state === 'open' || state === 'waitlist';
+const remaining = seatsRemaining(event);
+const startIST = formatIST(data.date);
+const endTimeIST = data.endDate
+  ? new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', timeStyle: 'short' }).format(data.endDate)
+  : undefined;
+
+const curriculum = [
+  { t: 'Connect & combine', d: 'Joins, unions and aggregations across messy source files.' },
+  { t: 'Clean with confidence', d: 'Cleaning steps, pivots, splits and calculated fields.' },
+  { t: 'Publish a real flow', d: 'Output an analysis-ready set and publish it to Tableau Server.' },
+];
+
+const audience = [
+  'Analysts tired of wrangling data by hand in spreadsheets',
+  'Tableau Desktop users who have never opened Prep',
+  'Students and career-switchers building a data portfolio',
+  'BI professionals who want a repeatable, shareable data pipeline',
+];
+
+const faqs = [
+  { q: 'Do I need to bring anything?', a: 'A laptop with Tableau Prep Builder installed (a free 14-day trial is fine). We send a setup email after you register.' },
+  { q: 'Is this beginner-friendly?', a: 'Yes. If you can open a CSV, you are ready. We build everything together, step by step.' },
+  { q: 'What does it cost?', a: 'The workshop is free for the community. Seats are limited, so please only register if you can attend.' },
+  { q: 'Is it recorded?', a: 'It is a hands-on session, so no full recording — but you keep the flow you build and the sample files.' },
+];
+
+// schema.org Event markup so the workshop surfaces correctly in search.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: data.name,
+  startDate: data.date.toISOString(),
+  endDate: data.endDate?.toISOString(),
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  eventStatus: 'https://schema.org/EventScheduled',
+  location: { '@type': 'Place', name: data.venue, address: data.venue },
+  description: data.summary,
+  organizer: { '@type': 'Organization', name: site.name, url: site.officialChapterUrl },
+  ...(data.registrationUrl && {
+    offers: {
+      '@type': 'Offer',
+      url: data.registrationUrl,
+      price: '0',
+      priceCurrency: 'INR',
+      availability: canRegister ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+    },
+  }),
+};
+
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const pageTitle = `${data.name} · ${site.shortName}`;
+const pageDesc = data.summary ?? site.tagline;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/images/og-default.png', Astro.site).toString()} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    {site.analytics?.plausibleDomain && (
+      <script defer data-domain={site.analytics.plausibleDomain} src="https://plausible.io/js/script.js"></script>
+    )}
+  </head>
+  <body>
+    <a class="skip-link" href="#register">Skip to registration</a>
+
+    <header class="promo-header">
+      <div class="wrap promo-header__inner">
+        <a class="brand" href={`${base}/`}>
+          <span class="brand-mark" aria-hidden="true">▦</span>
+          <span>{site.shortName}</span>
+        </a>
+        <div class="promo-header__meta">
+          <span class="promo-header__date">Sat, 22 Aug 2026 · 10:00 IST</span>
+          {canRegister
+            ? <a class="btn btn-primary btn-sm" href={data.registrationUrl}>Register</a>
+            : <span class="pill pill-muted">{registrationLabel(state)}</span>}
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <AnimatedBackground />
+        <div class="wrap hero__inner">
+          <p class="eyebrow">Hands-on Workshop · Bengaluru · In person</p>
+          <h1 id="hero-title">{data.name}</h1>
+          <p class="lead hero__lead">{data.summary}</p>
+
+          <ul class="hero__facts" aria-label="Event details">
+            <li>
+              <strong>When</strong>
+              <span>{startIST}{endTimeIST ? ` – ${endTimeIST}` : ''}</span>
+              <small data-local-from={data.date.toISOString()}></small>
+            </li>
+            <li><strong>Where</strong><span>{data.venue}</span></li>
+            <li><strong>Cost</strong><span>Free for the community</span></li>
+          </ul>
+
+          <Countdown date={data.date} label="Workshop starts in" />
+
+          <div class="hero__cta" id="register">
+            {canRegister ? (
+              <a class="btn btn-primary btn-lg" href={data.registrationUrl}>
+                {state === 'waitlist' ? 'Join the waitlist' : 'Register free'}
+              </a>
+            ) : (
+              <span class="btn btn-primary btn-lg" aria-disabled="true">{registrationLabel(state)}</span>
+            )}
+            <a class="btn btn-secondary btn-lg" href="#community">Join the community</a>
+          </div>
+
+          {remaining !== null && canRegister && (
+            <p class="hero__seats">
+              {remaining > 0
+                ? <>Only <strong>{remaining}</strong> of {data.capacity} seats left</>
+                : <>Seats full — join the waitlist</>}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section class="section wrap about" aria-labelledby="about-title">
+        <p class="eyebrow">About the session</p>
+        <h2 id="about-title">Messy spreadsheets in, a published flow out</h2>
+        <div class="about__body">
+          <Content />
+        </div>
+      </section>
+
+      <section class="section wrap" aria-labelledby="learn-title">
+        <p class="eyebrow">What you'll build</p>
+        <h2 id="learn-title">Three hours, three outcomes</h2>
+        <ul class="grid-cards" role="list">
+          {curriculum.map((c, i) => (
+            <li class="card learn-card">
+              <span class="learn-card__num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <h3>{c.t}</h3>
+              <p>{c.d}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="section wrap who" aria-labelledby="who-title">
+        <div>
+          <p class="eyebrow">Who it's for</p>
+          <h2 id="who-title">Built for people new to Prep</h2>
+        </div>
+        <ul class="who__list" role="list">
+          {audience.map((a) => <li>{a}</li>)}
+        </ul>
+      </section>
+
+      {speaker && (
+        <section class="section wrap" aria-labelledby="speaker-title">
+          <p class="eyebrow">Your facilitator</p>
+          <h2 id="speaker-title">Led by a working practitioner</h2>
+          <div class="card speaker-strip">
+            <div class="speaker-strip__avatar" aria-hidden="true">{speaker.data.name.charAt(0)}</div>
+            <div>
+              <h3>{speaker.data.name}</h3>
+              <p class="speaker-strip__role">{speaker.data.designation}{speaker.data.company ? ` · ${speaker.data.company}` : ''}</p>
+              <ul class="speaker-strip__tags" role="list">
+                {speaker.data.expertise.map((t: string) => <li class="pill pill-muted">{t}</li>)}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section class="section wrap" aria-labelledby="faq-title">
+        <p class="eyebrow">Good to know</p>
+        <h2 id="faq-title">Questions, answered</h2>
+        <div class="faq">
+          {faqs.map((f) => (
+            <details class="faq__item">
+              <summary>{f.q}</summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section class="section community-band" id="community" aria-labelledby="community-title">
+        <div class="wrap">
+          <p class="eyebrow">Can't make Aug 22?</p>
+          <h2 id="community-title">Get the next workshop in your inbox</h2>
+          <p class="lead">We run hands-on sessions roughly every quarter. Join the community list and we'll tell you first.</p>
+          <NewsletterSignup />
+        </div>
+      </section>
+
+      <section class="section final-cta wrap" aria-labelledby="final-title">
+        <h2 id="final-title">Save your seat for {data.name}</h2>
+        <p class="lead">{startIST} · {data.venue}</p>
+        {canRegister ? (
+          <a class="btn btn-primary btn-lg" href={data.registrationUrl}>
+            {state === 'waitlist' ? 'Join the waitlist' : 'Register free'}
+          </a>
+        ) : (
+          <span class="btn btn-primary btn-lg" aria-disabled="true">{registrationLabel(state)}</span>
+        )}
+      </section>
+    </main>
+
+    <Footer />
+
+    <script>
+      document.querySelectorAll('[data-local-from]').forEach((el) => {
+        const iso = el.getAttribute('data-local-from');
+        if (!iso) return;
+        const d = new Date(iso);
+        el.textContent = `Your local time: ${d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
+      });
+    </script>
+
+    <style>
+      .promo-header { position: sticky; top: 0; z-index: 50; background: color-mix(in oklch, var(--color-surface-raised) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-border); }
+      .promo-header__inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.6rem; }
+      .brand { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); text-decoration: none; color: var(--color-text); }
+      .brand-mark { color: var(--color-brand); }
+      .promo-header__meta { display: flex; align-items: center; gap: 0.9rem; }
+      .promo-header__date { font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 500; }
+      @media (max-width: 560px) { .promo-header__date { display: none; } }
+      .btn-sm { padding: 0.45rem 0.9rem; font-size: var(--text-sm); }
+      .btn-lg { padding: 0.95rem 1.7rem; font-size: var(--text-lg); }
+
+      .hero { position: relative; overflow: clip; background: var(--gradient-hero); padding-block: clamp(3rem, 2rem + 6vw, 6.5rem); }
+      .hero__inner { position: relative; z-index: 1; max-width: 54rem; }
+      .hero h1 { font-size: var(--text-hero); margin-top: 0.6rem; }
+      .hero__lead { margin-top: 1rem; font-size: var(--text-lg); }
+      .hero__facts { list-style: none; padding: 0; margin: 1.6rem 0 0; display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .hero__facts li { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.9rem 1rem; background: color-mix(in oklch, var(--color-surface-raised) 70%, transparent); border: 1px solid var(--color-border); border-radius: var(--radius); }
+      .hero__facts strong { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-brand); }
+      .hero__facts span { font-weight: 600; }
+      .hero__facts small { color: var(--color-text-muted); font-size: 0.8rem; }
+      .hero__cta { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.8rem; }
+      .hero__seats { margin-top: 1rem; color: var(--color-text-muted); }
+      .hero__seats strong { color: var(--color-danger); }
+      @media (max-width: 620px) { .hero__facts { grid-template-columns: 1fr; } }
+
+      .about__body { max-width: 60ch; margin-top: 1rem; color: var(--color-text); }
+      .about__body :global(h2) { font-size: var(--text-lg); margin-top: 1.5rem; }
+      .about__body :global(ul) { padding-left: 1.2rem; }
+
+      .grid-cards { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; gap: 1.2rem; grid-template-columns: repeat(3, 1fr); }
+      @media (max-width: 760px) { .grid-cards { grid-template-columns: 1fr; } }
+      .learn-card { padding: 1.6rem; }
+      .learn-card__num { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-brand); opacity: 0.5; }
+      .learn-card h3 { margin-top: 0.4rem; }
+      .learn-card p { margin-top: 0.4rem; color: var(--color-text-muted); }
+
+      .who { display: grid; gap: 1.5rem; grid-template-columns: 1fr 1.2fr; align-items: start; }
+      @media (max-width: 760px) { .who { grid-template-columns: 1fr; } }
+      .who__list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.7rem; }
+      .who__list li { padding: 0.9rem 1.1rem; background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius); position: relative; padding-left: 2.4rem; }
+      .who__list li::before { content: '✓'; position: absolute; left: 1rem; color: var(--color-success); font-weight: 700; }
+
+      .speaker-strip { display: flex; gap: 1.2rem; align-items: center; padding: 1.4rem; margin-top: 1.2rem; }
+      .speaker-strip__avatar { flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--gradient-brand); color: #fff; display: grid; place-items: center; font-family: var(--font-display); font-size: var(--text-xl); }
+      .speaker-strip__role { color: var(--color-text-muted); }
+      .speaker-strip__tags { list-style: none; padding: 0; margin: 0.6rem 0 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+      .faq { margin-top: 1.2rem; display: grid; gap: 0.6rem; max-width: 52rem; }
+      .faq__item { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 0.4rem 1.1rem; }
+      .faq__item summary { cursor: pointer; font-weight: 600; padding: 0.7rem 0; list-style-position: inside; }
+      .faq__item p { padding-bottom: 0.9rem; color: var(--color-text-muted); }
+
+      .community-band { background: var(--color-brand-soft); border-block: 1px solid var(--color-border); }
+      .community-band .lead { margin-top: 0.6rem; }
+
+      .final-cta { text-align: center; }
+      .final-cta h2 { font-size: var(--text-2xl); }
+      .final-cta .lead { margin: 0.6rem auto 1.6rem; }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,137 @@
+---
+interface Props {
+  date: Date;
+  /** Optional label shown above the digits. */
+  label?: string;
+}
+
+const { date, label = 'Starts in' } = Astro.props;
+const iso = date.toISOString();
+---
+<div class="countdown" data-countdown data-target={iso} role="timer" aria-live="off">
+  <p class="countdown__label" data-cd-label>{label}</p>
+  <div class="countdown__grid" data-cd-grid>
+    <div class="countdown__unit"><span data-cd="days">--</span><small>days</small></div>
+    <div class="countdown__unit"><span data-cd="hours">--</span><small>hrs</small></div>
+    <div class="countdown__unit"><span data-cd="minutes">--</span><small>min</small></div>
+    <div class="countdown__unit"><span data-cd="seconds">--</span><small>sec</small></div>
+  </div>
+  <p class="countdown__started" data-cd-started hidden>This event has started.</p>
+</div>
+
+<style>
+  .countdown {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--gradient-hero);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+  .countdown__label { font-size: var(--text-sm); font-weight: 600; color: var(--color-brand); text-transform: uppercase; letter-spacing: 0.1em; }
+  .countdown__grid { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+  .countdown__unit {
+    display: grid;
+    justify-items: center;
+    min-width: 3.5rem;
+    padding: var(--space-2);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+  .countdown__unit span {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--color-brand-strong);
+    /* Compositor-friendly: animate opacity only on tick. */
+    transition: opacity var(--duration-fast) var(--ease-out-expo);
+  }
+  .countdown__unit small { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .countdown__started { font-weight: 600; color: var(--color-accent); font-size: var(--text-lg); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .countdown__unit span { transition: none; }
+  }
+</style>
+
+<script>
+  // Progressive enhancement: digits render "--" until JS resolves them.
+  type Parts = { days: number; hours: number; minutes: number; seconds: number };
+
+  function diff(targetMs: number): Parts | null {
+    const delta = targetMs - Date.now();
+    if (delta <= 0) return null;
+    const totalSeconds = Math.floor(delta / 1000);
+    return {
+      days: Math.floor(totalSeconds / 86400),
+      hours: Math.floor((totalSeconds % 86400) / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+    };
+  }
+
+  function pad(n: number): string {
+    return n < 10 ? `0${n}` : String(n);
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLElement>('[data-countdown]').forEach((root) => {
+    const targetIso = root.dataset.target;
+    if (!targetIso) return;
+    const targetMs = new Date(targetIso).getTime();
+    if (Number.isNaN(targetMs)) return;
+
+    const grid = root.querySelector<HTMLElement>('[data-cd-grid]');
+    const label = root.querySelector<HTMLElement>('[data-cd-label]');
+    const started = root.querySelector<HTMLElement>('[data-cd-started]');
+    const fields: Record<keyof Parts, HTMLElement | null> = {
+      days: root.querySelector('[data-cd="days"]'),
+      hours: root.querySelector('[data-cd="hours"]'),
+      minutes: root.querySelector('[data-cd="minutes"]'),
+      seconds: root.querySelector('[data-cd="seconds"]'),
+    };
+
+    let timer: number | undefined;
+
+    const showStarted = () => {
+      if (grid) grid.hidden = true;
+      if (label) label.hidden = true;
+      if (started) started.hidden = false;
+      if (timer) window.clearInterval(timer);
+    };
+
+    const render = () => {
+      const parts = diff(targetMs);
+      if (!parts) {
+        showStarted();
+        return;
+      }
+      // Update only when value changes; avoid layout-bound flashing.
+      const next: Record<keyof Parts, string> = {
+        days: String(parts.days),
+        hours: pad(parts.hours),
+        minutes: pad(parts.minutes),
+        seconds: pad(parts.seconds),
+      };
+      (Object.keys(fields) as (keyof Parts)[]).forEach((key) => {
+        const el = fields[key];
+        if (el && el.textContent !== next[key]) {
+          el.textContent = next[key];
+          if (!reduceMotion && key === 'seconds') {
+            el.style.opacity = '0.6';
+            requestAnimationFrame(() => requestAnimationFrame(() => { el.style.opacity = '1'; }));
+          }
+        }
+      });
+    };
+
+    render();
+    if (diff(targetMs)) {
+      timer = window.setInterval(render, 1000);
+    }
+  });
+</script>

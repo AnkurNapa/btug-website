@@ -1,0 +1,211 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+
+// Learning Hub — a filterable grid of learning categories. Real blog posts and
+// resources are matched in by category; categories with no content yet still
+// render as a tile so the curriculum map stays complete.
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const CATEGORIES = [
+  'Tableau Desktop',
+  'Prep',
+  'Cloud',
+  'Server',
+  'Next',
+  'CRM Analytics',
+  'Data Viz',
+  'SQL',
+  'Python',
+  'AI for Analytics',
+  'Dashboard Design',
+  'Career Development',
+] as const;
+
+// The content types a learner can filter by.
+const CONTENT_TYPES = [
+  'Blogs',
+  'Videos',
+  'Tutorials',
+  'Slide decks',
+  'Sample dashboards',
+  'Downloads',
+] as const;
+type ContentType = (typeof CONTENT_TYPES)[number];
+
+// Map a resource `kind` to a learner-facing content type.
+const KIND_TO_TYPE: Record<string, ContentType> = {
+  deck: 'Slide decks',
+  recording: 'Videos',
+  'tableau-public': 'Sample dashboards',
+  download: 'Downloads',
+  link: 'Tutorials',
+};
+
+const blogEntries = (await getCollection('blog')).filter((e) => e.data.draft !== true);
+const resourceEntries = await getCollection('resources');
+
+type Item = { label: string; href: string; type: ContentType; external: boolean };
+
+function itemsForCategory(category: string): Item[] {
+  const items: Item[] = [];
+
+  for (const post of blogEntries) {
+    const matches = post.data.category === category || post.data.tags.includes(category);
+    if (matches) {
+      items.push({
+        label: post.data.title,
+        href: `${base}/blog/${post.slug}`,
+        type: 'Blogs',
+        external: false,
+      });
+    }
+  }
+
+  for (const entry of resourceEntries) {
+    if (entry.data.category === category && entry.data.linkStatus === 'active' && entry.data.url) {
+      items.push({
+        label: entry.data.title,
+        href: entry.data.url,
+        type: KIND_TO_TYPE[entry.data.kind] ?? 'Tutorials',
+        external: true,
+      });
+    }
+  }
+
+  return items;
+}
+
+const tiles = CATEGORIES.map((category) => {
+  const items = itemsForCategory(category);
+  const types = [...new Set(items.map((i) => i.type))];
+  return { category, items, types };
+});
+---
+<BaseLayout
+  title="Learning Hub"
+  description="A curated learning path across Tableau Desktop, Prep, Cloud, Server, SQL, Python, AI for Analytics and more — with blogs, videos, tutorials and sample dashboards."
+>
+  <section class="section">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Grow your skills"
+        title="Learning Hub"
+        lead="Pick a topic to explore community blogs, recorded sessions, tutorials, slide decks, and sample dashboards. Filter by the kind of content you learn best from."
+      />
+
+      <div class="filter" role="group" aria-label="Filter categories by content type">
+        <button class="chip is-active" type="button" data-filter="all" aria-pressed="true">All content</button>
+        {CONTENT_TYPES.map((t) => (
+          <button class="chip" type="button" data-filter={t} aria-pressed="false">{t}</button>
+        ))}
+      </div>
+
+      <ul class="learn-grid" id="learn-grid">
+        {tiles.map((tile) => (
+          <li class="learn-item" data-types={tile.types.join('|')}>
+            <article class="card learn-card">
+              <h2 class="learn-title">{tile.category}</h2>
+
+              <ul class="type-badges" aria-label="Available content types">
+                {CONTENT_TYPES.map((t) => (
+                  <li class={`pill ${tile.types.includes(t) ? 'pill-success' : 'pill-muted'}`} aria-hidden={tile.types.includes(t) ? undefined : 'true'}>
+                    {t}{tile.types.includes(t) ? '' : ' — soon'}
+                  </li>
+                ))}
+              </ul>
+
+              {tile.items.length > 0 ? (
+                <ul class="item-list">
+                  {tile.items.map((item) => (
+                    <li>
+                      <a
+                        href={item.href}
+                        rel={item.external ? 'noopener noreferrer' : undefined}
+                        target={item.external ? '_blank' : undefined}
+                      >
+                        {item.label}
+                      </a>
+                      <span class="item-type">{item.type}</span>
+                      {item.external && <span class="visually-hidden">(opens in a new tab)</span>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="learn-empty">
+                  Content for this topic is coming soon. Browse the
+                  <a href={`${base}/resources`}> resource library</a> or
+                  <a href={`${base}/blog`}> blog</a> in the meantime.
+                </p>
+              )}
+            </article>
+          </li>
+        ))}
+      </ul>
+
+      <p class="filter-empty" id="filter-empty" hidden>No topics have that content type yet — try “All content”.</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .filter { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: var(--space-6); }
+  .chip {
+    font: inherit; font-size: var(--text-sm); font-weight: 600;
+    padding: 0.4rem 0.9rem; border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-raised); color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+  }
+  .chip:hover { border-color: var(--color-brand); color: var(--color-brand-strong); }
+  .chip.is-active { background: var(--gradient-brand); color: #fff; border-color: transparent; }
+
+  .learn-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--space-4); grid-template-columns: 1fr;
+  }
+  .learn-item[hidden] { display: none; }
+  @media (min-width: 640px) { .learn-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .learn-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .learn-card { display: grid; gap: var(--space-2); padding: var(--space-4); height: 100%; align-content: start; }
+  .learn-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .learn-title { font-size: var(--text-lg); }
+  .type-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0; }
+  .item-list { list-style: none; padding: 0; display: grid; gap: var(--space-1); margin-top: var(--space-1); }
+  .item-list li { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: baseline; }
+  .item-type { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .learn-empty { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .filter-empty { color: var(--color-text-muted); }
+</style>
+
+<script>
+  // Progressive enhancement: without JS, every category tile is visible.
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
+  const items = Array.from(document.querySelectorAll<HTMLLIElement>('.learn-item'));
+  const emptyMsg = document.getElementById('filter-empty');
+
+  function applyFilter(filter: string) {
+    let visible = 0;
+    for (const item of items) {
+      const types = (item.dataset.types ?? '').split('|').filter(Boolean);
+      const show = filter === 'all' || types.includes(filter);
+      item.hidden = !show;
+      if (show) visible++;
+    }
+    if (emptyMsg) emptyMsg.hidden = visible !== 0;
+  }
+
+  for (const chip of chips) {
+    chip.addEventListener('click', () => {
+      for (const c of chips) {
+        const active = c === chip;
+        c.classList.toggle('is-active', active);
+        c.setAttribute('aria-pressed', String(active));
+      }
+      applyFilter(chip.dataset.filter ?? 'all');
+    });
+  }
+</script>

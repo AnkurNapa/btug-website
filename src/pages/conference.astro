@@ -1,0 +1,197 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import conference from '../data/conference.yaml';
+
+interface KeynoteSpeaker { name: string; title: string; topic: string; }
+interface Track { name: string; description: string; }
+interface AgendaItem { time: string; title: string; speaker?: string; }
+interface Feature { title: string; description: string; prize?: string; }
+
+const conf = conference as {
+  theme: string;
+  tagline: string;
+  date: string;
+  endDate?: string;
+  registrationUrl: string;
+  venue: { name: string; address: string; city: string; mapUrl?: string };
+  keynoteSpeakers: KeynoteSpeaker[];
+  tracks: Track[];
+  dashboardCompetition: Feature;
+  networkingLounge: Feature;
+  sponsorExpo: Feature;
+  agenda: AgendaItem[];
+};
+
+const start = new Date(conf.date);
+const end = conf.endDate ? new Date(conf.endDate) : undefined;
+const dateFmt = new Intl.DateTimeFormat('en-IN', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata',
+});
+const timeFmt = new Intl.DateTimeFormat('en-IN', {
+  hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata',
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: `BTUG Conference — ${conf.theme}`,
+  description: conf.tagline,
+  startDate: conf.date,
+  ...(conf.endDate ? { endDate: conf.endDate } : {}),
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  eventStatus: 'https://schema.org/EventScheduled',
+  location: {
+    '@type': 'Place',
+    name: conf.venue.name,
+    address: conf.venue.address,
+  },
+  organizer: { '@type': 'Organization', name: 'Bengaluru Tableau User Group' },
+  performer: conf.keynoteSpeakers.map((s) => ({ '@type': 'Person', name: s.name })),
+  offers: {
+    '@type': 'Offer',
+    url: conf.registrationUrl,
+    availability: 'https://schema.org/InStock',
+  },
+};
+---
+<BaseLayout title="Conference" description={conf.tagline} jsonLd={jsonLd}>
+  <section class="section conf-hero" aria-labelledby="conf-heading">
+    <div class="wrap conf-hero-inner">
+      <p class="eyebrow">Flagship Conference</p>
+      <h1 id="conf-heading">{conf.theme}</h1>
+      <p class="lead conf-lead">{conf.tagline}</p>
+      <dl class="conf-facts">
+        <div><dt>Date</dt><dd>{dateFmt.format(start)}{end ? `, ${timeFmt.format(start)}–${timeFmt.format(end)} IST` : ''}</dd></div>
+        <div><dt>Venue</dt><dd>{conf.venue.name}, {conf.venue.city}</dd></div>
+      </dl>
+      <a class="btn btn-primary" href={conf.registrationUrl}>Register now</a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="keynote-heading">
+    <div class="wrap">
+      <SectionHeading eyebrow="Keynote speakers" title="Voices shaping the data conversation" id="keynote-heading" />
+      <ul class="cards-grid grid-3">
+        {conf.keynoteSpeakers.map((speaker) => (
+          <li class="card speaker-card">
+            <h3>{speaker.name}</h3>
+            <p class="speaker-title">{speaker.title}</p>
+            <p class="speaker-topic">{speaker.topic}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section-sunken" aria-labelledby="tracks-heading">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Programming"
+        title="Hands-on labs, workshops and AI sessions"
+        lead="Three parallel tracks designed for every level — come to build, not just to watch."
+        id="tracks-heading"
+      />
+      <ul class="cards-grid grid-3">
+        {conf.tracks.map((track) => (
+          <li class="card track-card">
+            <h3>{track.name}</h3>
+            <p>{track.description}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="experience-heading">
+    <div class="wrap">
+      <SectionHeading eyebrow="More than talks" title="The full conference experience" id="experience-heading" />
+      <ul class="cards-grid grid-3">
+        <li class="card feature-card">
+          <h3>{conf.dashboardCompetition.title}</h3>
+          <p>{conf.dashboardCompetition.description}</p>
+          {conf.dashboardCompetition.prize && <p class="feature-extra"><strong>Prize:</strong> {conf.dashboardCompetition.prize}</p>}
+        </li>
+        <li class="card feature-card">
+          <h3>{conf.networkingLounge.title}</h3>
+          <p>{conf.networkingLounge.description}</p>
+        </li>
+        <li class="card feature-card">
+          <h3>{conf.sponsorExpo.title}</h3>
+          <p>{conf.sponsorExpo.description}</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section-sunken" aria-labelledby="agenda-heading">
+    <div class="wrap">
+      <SectionHeading eyebrow="Plan your day" title="Agenda" id="agenda-heading" />
+      <ol class="agenda">
+        {conf.agenda.map((item) => (
+          <li class="agenda-item">
+            <span class="agenda-time">{item.time}</span>
+            <span class="agenda-body">
+              <span class="agenda-title">{item.title}</span>
+              {item.speaker && <span class="agenda-speaker">{item.speaker}</span>}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="venue-heading">
+    <div class="wrap venue-grid">
+      <div>
+        <SectionHeading eyebrow="Getting there" title="Venue" id="venue-heading" />
+        <p class="venue-name">{conf.venue.name}</p>
+        <address class="venue-address">{conf.venue.address}</address>
+        {conf.venue.mapUrl && <p><a class="btn btn-secondary" href={conf.venue.mapUrl} rel="noopener">Open in Maps</a></p>}
+      </div>
+      <aside class="card register-band">
+        <h2>Ready to join us?</h2>
+        <p>Seats are limited. Register early to secure your spot at Bengaluru's largest community data event.</p>
+        <a class="btn btn-primary" href={conf.registrationUrl}>Register now</a>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section-sunken { background: var(--color-surface-sunken); }
+  .conf-hero { background: var(--gradient-hero); }
+  .conf-hero-inner { display: grid; gap: var(--space-3); max-width: 52ch; justify-items: start; }
+  .conf-hero h1 { font-size: var(--text-2xl); }
+  .conf-lead { max-width: 50ch; }
+  .conf-facts { display: grid; gap: var(--space-3); grid-template-columns: 1fr; margin-block: var(--space-2); }
+  .conf-facts dt { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-brand); font-weight: 600; }
+  .conf-facts dd { font-weight: 500; }
+
+  .cards-grid { list-style: none; padding: 0; display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
+  .speaker-card, .track-card, .feature-card { padding: var(--space-4); display: grid; gap: 0.5rem; align-content: start; }
+  .speaker-card h3, .track-card h3, .feature-card h3 { font-size: var(--text-lg); color: var(--color-brand-strong); }
+  .speaker-title { font-weight: 600; color: var(--color-text); }
+  .speaker-topic, .track-card p, .feature-card p { color: var(--color-text-muted); }
+  .feature-extra { color: var(--color-text); }
+
+  .agenda { list-style: none; padding: 0; display: grid; gap: 0; }
+  .agenda-item { display: grid; grid-template-columns: 4.5rem 1fr; gap: var(--space-3); padding-block: var(--space-3); border-top: 1px solid var(--color-border); }
+  .agenda-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .agenda-time { font-family: var(--font-display); font-weight: 700; color: var(--color-brand); }
+  .agenda-body { display: grid; gap: 0.2rem; }
+  .agenda-title { font-weight: 600; }
+  .agenda-speaker { font-size: var(--text-sm); color: var(--color-text-muted); }
+
+  .venue-grid { display: grid; gap: var(--space-6); grid-template-columns: 1fr; }
+  .venue-name { font-weight: 600; }
+  .venue-address { font-style: normal; color: var(--color-text-muted); margin-bottom: var(--space-3); }
+  .register-band { padding: var(--space-6); display: grid; gap: 0.75rem; align-content: start; background: var(--color-brand-soft); border-color: transparent; }
+  .register-band h2 { font-size: var(--text-lg); color: var(--color-brand-strong); }
+
+  @media (min-width: 720px) {
+    .conf-facts { grid-template-columns: repeat(2, max-content); gap: var(--space-6); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .venue-grid { grid-template-columns: 3fr 2fr; align-items: start; }
+  }
+</style>

@@ -1,0 +1,42 @@
+# Global site configuration: nav, socials, chat invites, and form endpoints.
+name: Bengaluru Tableau User Group
+shortName: BTUG
+tagline: Empowering Bengaluru's Data Community Through Learning, Collaboration & Innovation
+
+nav:
+  - { label: Home, href: / }
+  - { label: About, href: /about }
+  - { label: Events, href: /events }
+  - { label: Conference, href: /conference }
+  - { label: Learning, href: /learning }
+  - { label: Community, href: /community }
+  - { label: Volunteer, href: /volunteer }
+  - { label: Sponsors, href: /sponsors }
+  - { label: Gallery, href: /gallery }
+  - { label: Resources, href: /resources }
+  - { label: Blog, href: /blog }
+  - { label: Contact, href: /contact }
+
+socials:
+  linkedin: https://www.linkedin.com/company/bengaluru-tableau-user-group
+  instagram: https://www.instagram.com/btug.community
+
+# Community chat invites expire — see runbook: check these monthly.
+chatInvites:
+  whatsapp: https://chat.whatsapp.com/REPLACE_ME
+  slack: ""
+  discord: ""
+chatInvitesLastChecked: 2026-06-01
+
+# Google Forms / Sheets endpoints (no backend). Replace with real form URLs.
+forms:
+  contact: https://docs.google.com/forms/d/e/REPLACE_CONTACT_FORM/viewform?embedded=true
+  rsvpDefault: https://docs.google.com/forms/d/e/REPLACE_RSVP_FORM/viewform?embedded=true
+  sponsor: https://docs.google.com/forms/d/e/REPLACE_SPONSOR_FORM/viewform?embedded=true
+  newsletter: https://docs.google.com/forms/d/e/REPLACE_NEWSLETTER_FORM/viewform?embedded=true
+
+# Required independence disclosure (§6). Shown in the footer and About page.
+officialChapterUrl: https://usergroups.tableau.com/bengaluru-tableau-user-group
+
+analytics:
+  plausibleDomain: btug.community

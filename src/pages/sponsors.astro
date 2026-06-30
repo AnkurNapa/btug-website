@@ -1,0 +1,114 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import SponsorTier from '../components/SponsorTier.astro';
+import site from '../data/site.yaml';
+
+// Group active sponsors by tier. SponsorTier filters active===true and skips
+// empty tiers, so removing a logo via the CMS just makes it disappear.
+const all = await getCollection('sponsors');
+const sponsors = all.map((entry) => entry.data).filter((s) => s.active);
+
+type Tier = 'platinum' | 'gold' | 'silver' | 'community' | 'partner';
+const tierOrder: { key: Tier; title: string; blurb: string }[] = [
+  { key: 'platinum', title: 'Platinum', blurb: 'Our headline partners powering the flagship conference.' },
+  { key: 'gold', title: 'Gold', blurb: 'Major supporters of our workshops and meetups.' },
+  { key: 'silver', title: 'Silver', blurb: 'Backers helping us keep events free and accessible.' },
+  { key: 'community', title: 'Community', blurb: 'Local organisations championing the data community.' },
+  { key: 'partner', title: 'Partners', blurb: 'Venues, media and ecosystem collaborators.' },
+];
+
+const byTier = (tier: Tier) => sponsors.filter((s) => s.tier === tier);
+
+const benefits = [
+  { title: 'Reach engaged practitioners', text: 'Connect with hundreds of analysts, BI developers and data leaders across Bengaluru.' },
+  { title: 'Brand at every touchpoint', text: 'Your logo on event pages, slides, banners and post-event recaps.' },
+  { title: 'Speaking & demo slots', text: 'Higher tiers include stage time and hands-on demo opportunities.' },
+  { title: 'Hiring pipeline', text: 'Meet skilled data talent actively growing their Tableau and analytics careers.' },
+];
+
+const sponsorFormUrl = site.forms?.sponsor;
+---
+<BaseLayout
+  title="Sponsors"
+  description="Partner with the Bengaluru Tableau User Group. Our sponsors, the tiers available, and how to become one."
+>
+  <section class="section">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Powered by our partners"
+        title="Sponsors & Partners"
+        lead="BTUG events stay free and open thanks to organisations that believe in growing Bengaluru's data community."
+      />
+
+      {sponsors.length > 0 ? (
+        <div class="tiers">
+          {tierOrder.map((tier) => (
+            <SponsorTier title={tier.title} blurb={tier.blurb} sponsors={byTier(tier.key)} />
+          ))}
+        </div>
+      ) : (
+        <p class="empty">We are lining up partners for the coming season. Want to be first? Get in touch below.</p>
+      )}
+
+      <section class="benefits" aria-labelledby="benefits-heading">
+        <h2 id="benefits-heading" class="benefits-title">Why sponsor BTUG</h2>
+        <ul class="benefits-grid">
+          {benefits.map((b) => (
+            <li class="benefit card">
+              <h3 class="benefit-title">{b.title}</h3>
+              <p>{b.text}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <div class="cta card">
+        <div>
+          <h2 class="cta-title">Become a sponsor</h2>
+          <p>Tell us a little about your organisation and we will share the current tier deck and availability.</p>
+        </div>
+        {sponsorFormUrl && (
+          <a class="btn btn-primary" href={sponsorFormUrl} target="_blank" rel="noopener noreferrer">
+            Become a sponsor
+            <span class="visually-hidden"> (opens the sponsor enquiry form in a new tab)</span>
+          </a>
+        )}
+      </div>
+
+      <p class="cms-note">
+        Sponsor logos are managed in the CMS — adding, updating or removing one is
+        a content edit, not a code change.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .tiers { display: grid; gap: var(--space-6); margin-bottom: var(--space-8); }
+  .empty { color: var(--color-text-muted); margin-bottom: var(--space-6); }
+  .benefits { margin-bottom: var(--space-8); }
+  .benefits-title { font-size: var(--text-xl); margin-bottom: var(--space-4); }
+  .benefits-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--space-4); grid-template-columns: 1fr;
+  }
+  .benefit { padding: var(--space-4); display: grid; gap: 0.4rem; align-content: start; }
+  .benefit-title { font-size: var(--text-base); font-family: var(--font-display); }
+  .benefit p { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .cta {
+    padding: var(--space-6); display: flex; flex-wrap: wrap; gap: var(--space-4);
+    align-items: center; justify-content: space-between;
+    background: var(--gradient-hero);
+  }
+  .cta-title { font-size: var(--text-xl); }
+  .cta p { color: var(--color-text-muted); max-width: 48ch; }
+  .cms-note { margin-top: var(--space-4); font-size: var(--text-sm); color: var(--color-text-muted); }
+  @media (min-width: 640px) {
+    .benefits-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1000px) {
+    .benefits-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>

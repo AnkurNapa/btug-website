@@ -1,0 +1,216 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import {
+  registrationState,
+  registrationLabel,
+  seatsRemaining,
+  formatIST,
+  isUpcoming,
+} from '../lib/eventState';
+
+interface Props {
+  event: CollectionEntry<'events'>;
+}
+
+const { event } = Astro.props;
+const { data } = event;
+
+const state = registrationState(event);
+const label = registrationLabel(state);
+const remaining = seatsRemaining(event);
+const upcoming = isUpcoming(event);
+const isPast = data.status === 'past' || state === 'past';
+const isCancelled = data.status === 'cancelled';
+const canRegister = (state === 'open' || state === 'waitlist') && !!data.registrationUrl;
+
+// Type badge styling
+const typeLabel: Record<string, string> = {
+  'in-person': 'In person',
+  virtual: 'Virtual',
+  hybrid: 'Hybrid',
+};
+
+// Seats / status pill: pick variant + text from registration state.
+const seatsPill = (() => {
+  switch (state) {
+    case 'open':
+      return remaining === null
+        ? { cls: 'pill-success', text: 'Registration open' }
+        : { cls: 'pill-success', text: `${remaining} seat${remaining === 1 ? '' : 's'} left` };
+    case 'waitlist':
+      return { cls: 'pill-warning', text: 'Waitlist open' };
+    case 'full':
+      return { cls: 'pill-danger', text: 'Sold out' };
+    case 'not-configured':
+      return { cls: 'pill-muted', text: 'RSVP opens soon' };
+    case 'started':
+      return { cls: 'pill-muted', text: 'In progress' };
+    case 'cancelled':
+      return { cls: 'pill-danger', text: 'Cancelled' };
+    case 'past':
+      return { cls: 'pill-muted', text: 'Past event' };
+  }
+})();
+
+const isoDate = data.date.toISOString();
+const istLabel = formatIST(data.date);
+const href = `/events/${event.slug}/`;
+
+// data-* attributes power the client-side search/filter on the listing page.
+const searchText = [data.name, data.venue, data.speaker ?? '', data.summary ?? '']
+  .join(' ')
+  .toLowerCase();
+const groupKey = upcoming ? 'upcoming' : 'past';
+---
+<article
+  class:list={['card', 'event-card', { 'is-past': isPast, 'is-cancelled': isCancelled }]}
+  data-event
+  data-type={data.type}
+  data-status={data.status}
+  data-group={isCancelled ? 'cancelled' : groupKey}
+  data-month={isoDate.slice(0, 7)}
+  data-search={searchText}
+>
+  {data.banner && (
+    <a class="event-card__media" href={href} tabindex="-1" aria-hidden="true">
+      <img
+        src={data.banner}
+        alt=""
+        loading="lazy"
+        width="640"
+        height="320"
+      />
+    </a>
+  )}
+
+  <div class="event-card__body">
+    <div class="event-card__meta">
+      <span class="pill pill-muted">{typeLabel[data.type]}</span>
+      {data.featured && <span class="pill pill-warning">Featured</span>}
+      <span class:list={['pill', seatsPill.cls]}>{seatsPill.text}</span>
+    </div>
+
+    <h3 class="event-card__title">
+      <a href={href}>{data.name}</a>
+    </h3>
+
+    {data.venueChangeBanner && (
+      <p class="event-card__notice" role="status">
+        <strong>Venue update:</strong> {data.venueChangeBanner}
+      </p>
+    )}
+
+    <dl class="event-card__facts">
+      <div>
+        <dt class="visually-hidden">Date and time</dt>
+        <dd>
+          <time datetime={isoDate}>{istLabel}</time>
+          <span class="event-card__local" aria-live="polite">
+            (<time datetime={isoDate} data-local>your local time</time>)
+          </span>
+        </dd>
+      </div>
+      <div>
+        <dt class="visually-hidden">Venue</dt>
+        <dd class="event-card__venue">{data.venue}</dd>
+      </div>
+      {data.speaker && (
+        <div>
+          <dt class="visually-hidden">Speaker</dt>
+          <dd class="event-card__speaker">Speaker: {data.speaker}</dd>
+        </div>
+      )}
+    </dl>
+
+    {data.summary && <p class="event-card__summary">{data.summary}</p>}
+
+    <div class="event-card__actions">
+      {canRegister ? (
+        <a
+          class="btn btn-primary"
+          href={data.registrationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {label}
+        </a>
+      ) : isPast ? (
+        <a class="btn btn-secondary" href={href}>{label}</a>
+      ) : (
+        <button class="btn btn-secondary" type="button" disabled aria-disabled="true">
+          {label}
+        </button>
+      )}
+      <a class="event-card__details" href={href}>Details &rarr;</a>
+    </div>
+  </div>
+</article>
+
+<style>
+  .event-card {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .event-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+
+  .event-card__media {
+    display: block;
+    aspect-ratio: 2 / 1;
+    background: var(--color-surface-sunken);
+  }
+  .event-card__media img { width: 100%; height: 100%; object-fit: cover; }
+
+  .event-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
+
+  .event-card__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+  .event-card__title { font-size: var(--text-lg); }
+  .event-card__title a { color: inherit; text-decoration: none; }
+  .event-card__title a:hover { color: var(--color-brand-strong); }
+
+  .event-card__notice {
+    background: oklch(95% 0.07 75);
+    color: oklch(40% 0.12 75);
+    border-left: 3px solid var(--color-warning);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+  }
+
+  .event-card__facts { display: grid; gap: 0.3rem; margin: 0; }
+  .event-card__facts dd { margin: 0; color: var(--color-text-muted); font-size: var(--text-sm); }
+  .event-card__facts time { color: var(--color-text); font-weight: 500; }
+  .event-card__local { color: var(--color-text-muted); font-weight: 400; }
+  .event-card__local time { font-weight: 400; }
+
+  .event-card__summary { color: var(--color-text-muted); font-size: var(--text-sm); }
+
+  .event-card__actions {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding-top: var(--space-1);
+  }
+  .event-card__details { font-weight: 600; font-size: var(--text-sm); text-decoration: none; }
+  .event-card__details:hover { text-decoration: underline; }
+
+  /* Past events: muted, recede visually. */
+  .event-card.is-past { opacity: 0.78; }
+  .event-card.is-past .event-card__media img { filter: grayscale(0.6); }
+
+  /* Cancelled events: greyed and struck title. */
+  .event-card.is-cancelled { opacity: 0.85; }
+  .event-card.is-cancelled .event-card__title a {
+    text-decoration: line-through;
+    color: var(--color-text-muted);
+  }
+  .event-card.is-cancelled .event-card__media img { filter: grayscale(0.8); }
+</style>

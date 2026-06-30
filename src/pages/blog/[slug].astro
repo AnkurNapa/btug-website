@@ -1,0 +1,91 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// Pre-render every non-draft post. Drafts are excluded so they get no public URL.
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts
+    .filter((entry) => entry.data.draft !== true)
+    .map((entry) => ({
+      params: { slug: entry.slug },
+      props: { entry },
+    }));
+}
+
+interface Props {
+  entry: CollectionEntry<'blog'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+const { title, date, author, tags, excerpt, cover } = entry.data;
+
+const displayDate = new Intl.DateTimeFormat('en-IN', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}).format(date);
+const isoDate = date.toISOString();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Article schema.org structured data, surfaced via BaseLayout's jsonLd prop.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  datePublished: isoDate,
+  author: { '@type': 'Person', name: author },
+  keywords: tags.join(', '),
+  ...(excerpt ? { description: excerpt } : {}),
+  ...(cover ? { image: cover } : {}),
+};
+---
+<BaseLayout title={title} description={excerpt} image={cover} jsonLd={jsonLd}>
+  <article class="section">
+    <div class="wrap article-wrap">
+      <p class="back"><a href={`${base}/blog`}>← All posts</a></p>
+
+      <header class="article-head">
+        {tags.length > 0 && (
+          <ul class="article-tags" aria-label="Tags">
+            {tags.map((tag) => <li class="pill pill-muted">{tag}</li>)}
+          </ul>
+        )}
+        <h1 class="article-title">{title}</h1>
+        <p class="article-byline">
+          By <strong>{author}</strong>
+          <span aria-hidden="true"> · </span>
+          <time datetime={isoDate}>{displayDate}</time>
+        </p>
+      </header>
+
+      {cover && (
+        <img class="article-cover" src={cover} alt="" width="1200" height="630" loading="eager" />
+      )}
+
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .article-wrap { max-width: 44rem; }
+  .back { font-size: var(--text-sm); margin-bottom: var(--space-4); }
+  .article-head { display: grid; gap: var(--space-2); margin-bottom: var(--space-4); }
+  .article-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; padding: 0; }
+  .article-title { font-size: var(--text-2xl); }
+  .article-byline { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .article-cover { border-radius: var(--radius-lg); margin-bottom: var(--space-6); aspect-ratio: 1200 / 630; object-fit: cover; }
+  .prose { display: grid; gap: var(--space-3); }
+  .prose :global(h2) { font-size: var(--text-lg); margin-top: var(--space-4); }
+  .prose :global(h3) { font-size: var(--text-base); margin-top: var(--space-2); }
+  .prose :global(pre) {
+    background: var(--color-surface-sunken); padding: var(--space-3);
+    border-radius: var(--radius-sm); overflow-x: auto; font-size: var(--text-sm);
+  }
+  .prose :global(code) { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .prose :global(ul), .prose :global(ol) { padding-left: 1.4rem; display: grid; gap: 0.4rem; }
+</style>

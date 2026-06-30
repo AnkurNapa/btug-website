@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import site from '../data/site.yaml';
+
+const values = [
+  { name: 'Learn', body: 'Grow real Tableau and analytics skills through hands-on sessions and peer mentoring.' },
+  { name: 'Share', body: 'Openly exchange techniques, datasets and dashboards — knowledge multiplies when shared.' },
+  { name: 'Inspire', body: 'Spotlight community work and data stories that spark new ideas and ambition.' },
+  { name: 'Collaborate', body: 'Build together across companies, roles and experience levels.' },
+  { name: 'Grow Together', body: 'Lift the whole community, from first-time learners to seasoned practitioners.' },
+];
+---
+<BaseLayout
+  title="About"
+  description="BTUG is an independent Tableau and analytics community building one of India's strongest data communities in Bengaluru."
+>
+  <section class="section" aria-labelledby="about-heading">
+    <div class="wrap about-intro">
+      <SectionHeading
+        eyebrow="About BTUG"
+        title="An independent home for Bengaluru's data community"
+        lead="The Bengaluru Tableau User Group is a volunteer-led community for analysts, BI developers and data enthusiasts who want to learn, share and grow with Tableau and modern analytics."
+        id="about-heading"
+      />
+    </div>
+  </section>
+
+  <section class="section section-sunken" aria-labelledby="mission-heading">
+    <div class="wrap mission-grid">
+      <article class="card panel">
+        <h2 id="mission-heading">Our mission</h2>
+        <p>To build one of India's strongest Tableau and analytics communities — a welcoming, high-signal space where Bengaluru's data people level up through practice, mentorship and real connection.</p>
+      </article>
+      <article class="card panel">
+        <h2>Our vision</h2>
+        <p>A thriving, inclusive data community where every member, from curious beginner to seasoned expert, finds the people, knowledge and opportunities to do their best work with data.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="values-heading">
+    <div class="wrap">
+      <SectionHeading eyebrow="What we stand for" title="Our core values" id="values-heading" />
+      <ul class="values-grid">
+        {values.map((value) => (
+          <li class="card value-card">
+            <h3>{value.name}</h3>
+            <p>{value.body}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section-sunken" aria-labelledby="independence-heading">
+    <div class="wrap">
+      <aside class="card note" aria-labelledby="independence-heading">
+        <h2 id="independence-heading">A note on independence</h2>
+        <p>
+          BTUG is an independent, community-run group and is <strong>not</strong> the
+          official Tableau (Bevy) user-group chapter. We are organized by
+          volunteers for the love of data. For the official Tableau User Group
+          chapter for Bengaluru, please visit
+          <a href={site.officialChapterUrl} rel="noopener">the official chapter page</a>.
+        </p>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section-sunken { background: var(--color-surface-sunken); }
+  .mission-grid { display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
+  .panel { padding: var(--space-6); display: grid; gap: 0.75rem; }
+  .panel h2 { font-size: var(--text-lg); color: var(--color-brand-strong); }
+
+  .values-grid { list-style: none; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
+  .value-card { padding: var(--space-4); display: grid; gap: 0.4rem; }
+  .value-card h3 { font-size: var(--text-lg); color: var(--color-brand); }
+  .value-card p { color: var(--color-text-muted); }
+
+  .note { padding: var(--space-6); display: grid; gap: 0.6rem; border-left: 4px solid var(--color-accent); }
+  .note h2 { font-size: var(--text-lg); }
+
+  @media (min-width: 720px) {
+    .mission-grid { grid-template-columns: repeat(2, 1fr); }
+    .values-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .values-grid { grid-template-columns: repeat(5, 1fr); }
+  }
+</style>

@@ -1,0 +1,283 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getCollection, getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Countdown from '../../components/Countdown.astro';
+import EventLocalTime from '../../components/EventLocalTime.astro';
+import {
+  registrationState,
+  registrationLabel,
+  seatsRemaining,
+  formatIST,
+  isUpcoming,
+} from '../../lib/eventState';
+
+export const getStaticPaths = (async () => {
+  const events = await getCollection('events');
+  return events.map((event) => ({
+    params: { slug: event.slug },
+    props: { event },
+  }));
+}) satisfies GetStaticPaths;
+
+const { event } = Astro.props;
+const { data } = event;
+const { Content } = await event.render();
+
+const state = registrationState(event);
+const label = registrationLabel(state);
+const remaining = seatsRemaining(event);
+const upcoming = isUpcoming(event);
+const isPast = data.status === 'past' || state === 'past';
+const isCancelled = data.status === 'cancelled';
+const canRegister = (state === 'open' || state === 'waitlist') && !!data.registrationUrl;
+
+const typeLabel: Record<string, string> = {
+  'in-person': 'In person',
+  virtual: 'Virtual',
+  hybrid: 'Hybrid',
+};
+
+const isoDate = data.date.toISOString();
+const isoEnd = data.endDate?.toISOString();
+
+// Speaker lookup — guard so a missing slug never breaks the build/page.
+let speaker: Awaited<ReturnType<typeof getEntry>> | undefined;
+if (data.speaker) {
+  try {
+    speaker = await getEntry('speakers', data.speaker);
+  } catch {
+    speaker = undefined;
+  }
+}
+const speakerName = speaker?.data?.name ?? data.speaker;
+
+// schema.org Event JSON-LD.
+const attendanceMode: Record<string, string> = {
+  'in-person': 'https://schema.org/OfflineEventAttendanceMode',
+  virtual: 'https://schema.org/OnlineEventAttendanceMode',
+  hybrid: 'https://schema.org/MixedEventAttendanceMode',
+};
+const eventStatus = isCancelled
+  ? 'https://schema.org/EventCancelled'
+  : 'https://schema.org/EventScheduled';
+
+const location =
+  data.type === 'virtual'
+    ? {
+        '@type': 'VirtualLocation',
+        url: data.registrationUrl ?? Astro.url.toString(),
+      }
+    : {
+        '@type': 'Place',
+        name: data.venue,
+        address: { '@type': 'PostalAddress', addressLocality: 'Bengaluru', addressCountry: 'IN' },
+      };
+
+const jsonLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: data.name,
+  startDate: isoDate,
+  ...(isoEnd ? { endDate: isoEnd } : {}),
+  eventStatus,
+  eventAttendanceMode: attendanceMode[data.type],
+  location,
+  description: data.summary ?? '',
+  organizer: {
+    '@type': 'Organization',
+    name: 'Bengaluru Tableau User Group',
+    url: new URL('/', Astro.site).toString(),
+  },
+  ...(speakerName ? { performer: { '@type': 'Person', name: speakerName } } : {}),
+  ...(data.registrationUrl && canRegister
+    ? {
+        offers: {
+          '@type': 'Offer',
+          url: data.registrationUrl,
+          price: '0',
+          priceCurrency: 'INR',
+          availability:
+            state === 'open'
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/LimitedAvailability',
+        },
+      }
+    : {}),
+};
+---
+<BaseLayout title={data.name} description={data.summary} image={data.banner} jsonLd={jsonLd}>
+  <article class="event-detail">
+    {data.banner && (
+      <div class:list={['event-detail__banner', { 'is-dim': isPast || isCancelled }]}>
+        <img src={data.banner} alt="" width="1280" height="480" fetchpriority="high" />
+      </div>
+    )}
+
+    <div class="wrap event-detail__inner">
+      <p class="eyebrow">
+        <a href="/events/">Events</a> / {typeLabel[data.type]}
+      </p>
+      <h1 class:list={['event-detail__title', { 'is-cancelled': isCancelled }]}>{data.name}</h1>
+
+      {isCancelled && (
+        <p class="event-detail__alert event-detail__alert--danger" role="alert">
+          This event has been cancelled.
+        </p>
+      )}
+      {isPast && !isCancelled && (
+        <p class="event-detail__alert event-detail__alert--muted" role="status">
+          This event has already taken place.
+        </p>
+      )}
+      {data.venueChangeBanner && (
+        <p class="event-detail__alert event-detail__alert--warning" role="alert">
+          <strong>Venue update:</strong> {data.venueChangeBanner}
+        </p>
+      )}
+
+      <div class="event-detail__layout">
+        <div class="event-detail__main">
+          <dl class="event-detail__facts">
+            <div>
+              <dt>When</dt>
+              <dd>
+                <time datetime={isoDate}>{formatIST(data.date)}</time><br />
+                <span class="event-detail__local">
+                  Your local time: <time datetime={isoDate} data-local>resolving…</time>
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt>Where</dt>
+              <dd>{data.venue}</dd>
+            </div>
+            <div>
+              <dt>Format</dt>
+              <dd>{typeLabel[data.type]}</dd>
+            </div>
+            {speakerName && (
+              <div>
+                <dt>Speaker</dt>
+                <dd>
+                  {speaker ? <a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/speakers/#${speaker.slug}`}>{speakerName}</a> : speakerName}
+                </dd>
+              </div>
+            )}
+          </dl>
+
+          <div class="event-detail__body">
+            <Content />
+          </div>
+        </div>
+
+        <aside class="event-detail__aside">
+          {upcoming && <Countdown date={data.date} />}
+
+          <div class="event-detail__rsvp card">
+            <p class="event-detail__rsvp-status">
+              {state === 'open' && remaining !== null && (
+                <span class="pill pill-success">{remaining} seat{remaining === 1 ? '' : 's'} left</span>
+              )}
+              {state === 'open' && remaining === null && (
+                <span class="pill pill-success">Registration open</span>
+              )}
+              {state === 'waitlist' && <span class="pill pill-warning">Waitlist open</span>}
+              {state === 'full' && <span class="pill pill-danger">Sold out</span>}
+              {state === 'not-configured' && <span class="pill pill-muted">RSVP opens soon</span>}
+              {state === 'started' && <span class="pill pill-muted">Registration closed</span>}
+              {state === 'cancelled' && <span class="pill pill-danger">Cancelled</span>}
+              {state === 'past' && <span class="pill pill-muted">Past event</span>}
+            </p>
+
+            {canRegister ? (
+              <a
+                class="btn btn-primary event-detail__cta"
+                href={data.registrationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {label}
+              </a>
+            ) : (
+              <button class="btn btn-secondary event-detail__cta" type="button" disabled aria-disabled="true">
+                {label}
+              </button>
+            )}
+
+            {state === 'not-configured' && (
+              <p class="event-detail__hint">The RSVP form is being finalised. Check back soon.</p>
+            )}
+            {state === 'started' && (
+              <p class="event-detail__hint">Sign-ups close once the event begins.</p>
+            )}
+            {data.capacity != null && (
+              <p class="event-detail__hint">
+                Capacity {data.capacity} · {data.seatsTaken} registered
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
+    </div>
+  </article>
+
+  <EventLocalTime />
+</BaseLayout>
+
+<style>
+  .event-detail__banner { width: 100%; max-height: 24rem; overflow: hidden; }
+  .event-detail__banner img { width: 100%; height: 100%; object-fit: cover; max-height: 24rem; }
+  .event-detail__banner.is-dim img { filter: grayscale(0.6); opacity: 0.85; }
+
+  .event-detail__inner { padding-block: var(--space-6); }
+  .event-detail__title { font-size: var(--text-2xl); margin-block: var(--space-2) var(--space-4); }
+  .event-detail__title.is-cancelled { text-decoration: line-through; color: var(--color-text-muted); }
+
+  .event-detail__alert {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    margin-bottom: var(--space-3);
+    font-size: var(--text-sm);
+  }
+  .event-detail__alert--danger { background: oklch(94% 0.08 25); color: var(--color-danger); border-left: 3px solid var(--color-danger); }
+  .event-detail__alert--warning { background: oklch(95% 0.07 75); color: oklch(40% 0.12 75); border-left: 3px solid var(--color-warning); }
+  .event-detail__alert--muted { background: var(--color-surface-sunken); color: var(--color-text-muted); border-left: 3px solid var(--color-border); }
+
+  .event-detail__layout {
+    display: grid;
+    gap: var(--space-6);
+    margin-top: var(--space-4);
+  }
+  @media (min-width: 56rem) {
+    .event-detail__layout { grid-template-columns: minmax(0, 1fr) 20rem; align-items: start; }
+    .event-detail__aside { position: sticky; top: var(--space-4); }
+  }
+
+  .event-detail__facts {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-6);
+    padding: var(--space-4);
+    background: var(--color-surface-sunken);
+    border-radius: var(--radius-lg);
+  }
+  .event-detail__facts dt { font-size: var(--text-sm); font-weight: 600; color: var(--color-brand); text-transform: uppercase; letter-spacing: 0.08em; }
+  .event-detail__facts dd { margin: 0.2rem 0 0; }
+  .event-detail__local { color: var(--color-text-muted); font-size: var(--text-sm); }
+
+  .event-detail__body { display: grid; gap: var(--space-3); line-height: 1.7; }
+  .event-detail__body :global(h2) { font-size: var(--text-lg); margin-top: var(--space-4); }
+  .event-detail__body :global(ul) { padding-left: 1.25rem; display: grid; gap: 0.3rem; }
+  .event-detail__body :global(blockquote) {
+    border-left: 3px solid var(--color-brand);
+    padding-left: var(--space-3);
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  .event-detail__aside { display: grid; gap: var(--space-4); }
+  .event-detail__rsvp { display: grid; gap: var(--space-3); padding: var(--space-4); }
+  .event-detail__cta { width: 100%; justify-content: center; }
+  .event-detail__hint { font-size: var(--text-sm); color: var(--color-text-muted); }
+</style>

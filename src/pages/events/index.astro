@@ -1,0 +1,272 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EventCard from '../../components/EventCard.astro';
+import EventLocalTime from '../../components/EventLocalTime.astro';
+import { isUpcoming } from '../../lib/eventState';
+
+const all = await getCollection('events');
+
+// Upcoming first (soonest → latest), then everything else (most recent → oldest).
+const upcoming = all
+  .filter((e) => isUpcoming(e))
+  .sort((a, b) => a.data.date.getTime() - b.data.date.getTime());
+
+const rest = all
+  .filter((e) => !isUpcoming(e))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const ordered = [...upcoming, ...rest];
+
+// Month groupings for the calendar view (label keyed by YYYY-MM).
+const monthFmt = new Intl.DateTimeFormat('en-IN', {
+  timeZone: 'Asia/Kolkata',
+  month: 'long',
+  year: 'numeric',
+});
+const monthOf = (d: Date) => {
+  const key = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+  }).format(d);
+  return { key, label: monthFmt.format(d) };
+};
+
+const months = new Map<string, string>();
+for (const e of ordered) {
+  const { key, label } = monthOf(e.data.date);
+  if (!months.has(key)) months.set(key, label);
+}
+const sortedMonths = [...months.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+---
+<BaseLayout
+  title="Events"
+  description="Workshops, meetups, and the annual fest from the Bengaluru Tableau User Group."
+>
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">BTUG</p>
+      <h1 class="events-title">Events</h1>
+      <p class="lead">
+        Hands-on workshops, community meetups, and our annual fest. Times are shown
+        in IST with your local time alongside.
+      </p>
+
+      <!-- Controls: progressive enhancement. Hidden until JS confirms support. -->
+      <form class="events-controls" data-controls hidden role="search" aria-label="Filter events">
+        <div class="events-controls__row">
+          <label class="events-search">
+            <span class="visually-hidden">Search events</span>
+            <input
+              type="search"
+              name="q"
+              placeholder="Search by name, venue, speaker…"
+              data-search-input
+              autocomplete="off"
+            />
+          </label>
+
+          <label class="events-select">
+            <span class="visually-hidden">Filter by type</span>
+            <select data-filter-type>
+              <option value="all">All types</option>
+              <option value="in-person">In person</option>
+              <option value="virtual">Virtual</option>
+              <option value="hybrid">Hybrid</option>
+            </select>
+          </label>
+
+          <label class="events-select">
+            <span class="visually-hidden">Filter by status</span>
+            <select data-filter-status>
+              <option value="all">All statuses</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="past">Past</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </label>
+
+          <div class="events-view" role="group" aria-label="View mode">
+            <button type="button" class="events-view__btn is-active" data-view-btn="list" aria-pressed="true">List</button>
+            <button type="button" class="events-view__btn" data-view-btn="calendar" aria-pressed="false">By month</button>
+          </div>
+        </div>
+      </form>
+
+      <p class="events-empty" data-empty hidden role="status">No events match your filters.</p>
+
+      <!-- LIST VIEW: grouped upcoming → past. Visible without JS. -->
+      <div data-view="list">
+        {upcoming.length > 0 && (
+          <section class="events-group" aria-labelledby="grp-upcoming">
+            <h2 id="grp-upcoming" class="events-group__title">Upcoming</h2>
+            <div class="events-grid">
+              {upcoming.map((event) => <EventCard event={event} />)}
+            </div>
+          </section>
+        )}
+        {rest.length > 0 && (
+          <section class="events-group" aria-labelledby="grp-past">
+            <h2 id="grp-past" class="events-group__title">Past &amp; cancelled</h2>
+            <div class="events-grid">
+              {rest.map((event) => <EventCard event={event} />)}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <!-- CALENDAR VIEW: grouped by month. Hidden by default; JS toggles it. -->
+      <div data-view="calendar" hidden>
+        {sortedMonths.map(([key, label]) => (
+          <section class="events-group" aria-label={label}>
+            <h2 class="events-group__title">{label}</h2>
+            <div class="events-grid">
+              {ordered
+                .filter((e) => monthOf(e.data.date).key === key)
+                .map((event) => <EventCard event={event} />)}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <EventLocalTime />
+</BaseLayout>
+
+<style>
+  .events-title { font-size: var(--text-2xl); margin-bottom: var(--space-2); }
+
+  .events-controls { margin-block: var(--space-6) var(--space-4); }
+  .events-controls__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+  .events-search { flex: 1 1 16rem; }
+  .events-search input,
+  .events-select select {
+    width: 100%;
+    font: inherit;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+  }
+  .events-select { flex: 0 1 11rem; }
+
+  .events-view {
+    display: inline-flex;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--color-surface-raised);
+  }
+  .events-view__btn {
+    font: inherit;
+    font-weight: 600;
+    font-size: var(--text-sm);
+    padding: 0.6rem 1rem;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color var(--duration-fast), background var(--duration-fast);
+  }
+  .events-view__btn.is-active { background: var(--gradient-brand); color: #fff; }
+
+  .events-group { margin-top: var(--space-6); }
+  .events-group__title {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-1);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .events-grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  }
+
+  .events-empty { margin-top: var(--space-6); color: var(--color-text-muted); font-weight: 500; }
+
+  /* A group with every card filtered out should collapse. */
+  .events-group[data-collapsed] { display: none; }
+</style>
+
+<script>
+  // Vanilla, progressive enhancement. Cards are server-rendered and visible
+  // without JS; this layer adds search, filtering, and the view toggle.
+  const controls = document.querySelector<HTMLElement>('[data-controls]');
+  if (controls) controls.hidden = false;
+
+  const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
+  const typeSelect = document.querySelector<HTMLSelectElement>('[data-filter-type]');
+  const statusSelect = document.querySelector<HTMLSelectElement>('[data-filter-status]');
+  const emptyMsg = document.querySelector<HTMLElement>('[data-empty]');
+  const viewButtons = document.querySelectorAll<HTMLButtonElement>('[data-view-btn]');
+  const views: Record<string, HTMLElement | null> = {
+    list: document.querySelector('[data-view="list"]'),
+    calendar: document.querySelector('[data-view="calendar"]'),
+  };
+
+  let currentView: 'list' | 'calendar' = 'list';
+
+  function activeContainer(): HTMLElement | null {
+    return views[currentView];
+  }
+
+  function applyFilters() {
+    const q = (searchInput?.value ?? '').trim().toLowerCase();
+    const type = typeSelect?.value ?? 'all';
+    const status = statusSelect?.value ?? 'all';
+    const container = activeContainer();
+    if (!container) return;
+
+    let visible = 0;
+    container.querySelectorAll<HTMLElement>('[data-event]').forEach((card) => {
+      const matchesType = type === 'all' || card.dataset.type === type;
+      const matchesStatus = status === 'all' || card.dataset.status === status;
+      const matchesSearch = q === '' || (card.dataset.search ?? '').includes(q);
+      const show = matchesType && matchesStatus && matchesSearch;
+      card.hidden = !show;
+      if (show) visible += 1;
+    });
+
+    // Collapse group sections that now have no visible cards.
+    container.querySelectorAll<HTMLElement>('.events-group').forEach((group) => {
+      const anyVisible = group.querySelector('[data-event]:not([hidden])');
+      if (anyVisible) group.removeAttribute('data-collapsed');
+      else group.setAttribute('data-collapsed', '');
+    });
+
+    if (emptyMsg) emptyMsg.hidden = visible !== 0;
+  }
+
+  function setView(view: 'list' | 'calendar') {
+    currentView = view;
+    (Object.keys(views) as ('list' | 'calendar')[]).forEach((key) => {
+      const el = views[key];
+      if (el) el.hidden = key !== view;
+    });
+    viewButtons.forEach((btn) => {
+      const active = btn.dataset.viewBtn === view;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', String(active));
+    });
+    applyFilters();
+  }
+
+  searchInput?.addEventListener('input', applyFilters);
+  typeSelect?.addEventListener('change', applyFilters);
+  statusSelect?.addEventListener('change', applyFilters);
+  viewButtons.forEach((btn) =>
+    btn.addEventListener('click', () => setView(btn.dataset.viewBtn === 'calendar' ? 'calendar' : 'list')),
+  );
+
+  applyFilters();
+</script>

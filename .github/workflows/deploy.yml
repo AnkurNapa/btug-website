@@ -1,0 +1,68 @@
+# Build the Astro site and deploy it to GitHub Pages.
+#
+# SAFE-DEPLOY-ON-FAILURE GUARANTEE
+# --------------------------------
+# This workflow is split into two jobs: `build` and `deploy`.
+# The `deploy` job declares `needs: build`, so GitHub Actions will only start it
+# after `build` finishes successfully. If `npm run build` fails (bad content,
+# broken config, failing validation) the `build` job goes red, the `deploy` job
+# is SKIPPED entirely, and nothing is published. The last successfully deployed
+# site stays live and untouched. A broken commit can never take the site down.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least-privilege token scopes required by the Pages deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment. Do NOT cancel an in-progress run:
+# letting a running deploy finish avoids leaving Pages in a half-published state.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Astro site
+        run: npm run build
+
+      - name: Upload Pages artifact
+        # Astro's default output directory is ./dist
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    name: Deploy
+    # Gate: this job runs ONLY after `build` succeeds. A failed build skips
+    # deploy and leaves the existing live site in place.
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
