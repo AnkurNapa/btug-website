@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>BTUG Content Manager</title>
+  </head>
+  <body>
+    <!--
+      Decap CMS admin shell for the Bengaluru Tableau User Group site.
+      Non-technical organizers edit content here; every save becomes a Git
+      commit / pull request that triggers the Astro build + safe deploy.
+
+      Decap is pinned to a specific version below so a future CDN release
+      cannot silently change behavior. To upgrade, bump the version in BOTH
+      the URL and the integrity note, then test in a draft branch first.
+
+      SRI (Subresource Integrity): unpkg does not publish a stable SRI hash
+      for this bundle, so an `integrity="sha384-..."` attribute is omitted
+      here. If the org wants SRI, self-host decap-cms-app.js, generate a hash
+      with:
+        openssl dgst -sha384 -binary decap-cms-app.js | openssl base64 -A
+      and add integrity + crossorigin attributes to the <script> tag.
+    -->
+    <script src="https://unpkg.com/decap-cms@3.6.4/dist/decap-cms.js"></script>
+  </body>
+</html>
