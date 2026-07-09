@@ -1,59 +1,64 @@
-/* BTUG design tokens — Tableau-inspired blue/white, premium and minimal.
+/* BTUG design tokens — VizChitra-inspired: off-white "paper" ground, ink text,
+   a magenta brand, and a categorical dataviz accent set (the streamgraph ribbon).
    Single source for palette, type scale, spacing, motion. Never hardcode these
    values in components. */
 :root {
-  /* Palette — Tableau Conference inspired: disciplined deep-navy base with
-     royal-blue gradients and saturated teal / violet / coral accents used
-     sparingly as punctuation, never as large fields. */
-  --color-surface: oklch(99% 0.004 250);
-  --color-surface-raised: oklch(100% 0 0);
-  --color-surface-sunken: oklch(96.5% 0.008 255);
-  --color-text: oklch(22% 0.05 262);
-  --color-text-muted: oklch(48% 0.03 262);
-  --color-border: oklch(90% 0.014 262);
+  /* Neutrals — off-white paper + near-black ink. */
+  --color-surface: #fafcfd;            /* paper */
+  --color-surface-raised: #ffffff;     /* cards */
+  --color-surface-sunken: #f3f0f4;     /* sunken sections (faint warm) */
+  --color-text: #101214;               /* ink */
+  --color-text-muted: #55535c;
+  --color-border: #e6e2ea;
 
-  /* Deep blues (the TC foundation). */
-  --color-navy: #001642;          /* primary button / near-black navy */
-  --color-ink: #032d60;           /* hover/active deep blue */
-  --color-night: #010f2a;         /* darkest section background */
-  --color-brand: oklch(52% 0.2 258);        /* royal blue */
-  --color-brand-strong: oklch(42% 0.21 262);
-  --color-brand-soft: oklch(96% 0.03 258);
+  /* Deep tones (map onto existing "navy/ink/night" hooks used by buttons + dark
+     bands). Repointed to the magenta/ink family so the whole site recolors. */
+  --color-navy: #720042;               /* primary button (magenta) */
+  --color-ink: #56002f;                /* hover/active deep magenta */
+  --color-night: #141019;              /* darkest section background (ink) */
+  --color-brand: #8a1a5e;              /* links / brand (legible magenta on paper) */
+  --color-brand-strong: #720042;
+  --color-brand-soft: #ffeaf3;         /* pale pink */
 
-  /* Saturated accents — punctuation only. */
-  --color-teal: #04e1cb;
-  --color-violet: #8a59f2;
+  /* Categorical dataviz accents — the ribbon + punctuation. */
+  --color-magenta: #720042;
+  --color-pink: #fe82b8;
+  --color-blue: #233876;
+  --color-teal: #0f766e;
+  --color-orange: #d46637;
+  --color-gold: #b07d09;
+  --color-violet: #5a63c0;             /* periwinkle (repurposed) */
   --color-coral: #fe8aa7;
-  --color-sky: #54b6ff;
-  --color-accent: var(--color-teal);
-  --color-success: oklch(62% 0.15 165);
-  --color-warning: oklch(72% 0.16 75);
-  --color-danger: oklch(62% 0.21 18);
+  --color-sky: #7f9bf5;
+  --color-accent: var(--color-magenta);
+  --color-success: oklch(58% 0.13 165);
+  --color-warning: oklch(70% 0.16 75);
+  --color-danger: oklch(60% 0.21 18);
 
-  /* On-dark text. */
+  /* On-dark text (for magenta / ink bands). */
   --color-on-dark: #ffffff;
-  --color-on-dark-muted: rgba(226, 232, 255, 0.74);
+  --color-on-dark-muted: rgba(255, 236, 246, 0.78);
 
-  /* Gradients — royal-blue vertical wash + glossy data orb. */
-  --gradient-royal: linear-gradient(to bottom, #002db3 0%, #0835bb 100%);
-  --gradient-night: linear-gradient(165deg, #001642 0%, #010f2a 100%);
+  /* Gradients — magenta band, ink band, paper hero wash, ribbon-tinted orbs. */
+  --gradient-royal: linear-gradient(135deg, #8a0a52 0%, #720042 100%);
+  --gradient-night: linear-gradient(165deg, #221a26 0%, #141019 100%);
   --gradient-hero: radial-gradient(
       120% 120% at 15% 10%,
-      oklch(96% 0.05 258) 0%,
-      oklch(99% 0.01 255) 45%,
-      oklch(100% 0 0) 100%);
-  --gradient-brand: linear-gradient(135deg, #066afe 0%, #022ac0 100%);
-  --gradient-orb: radial-gradient(circle at 35% 35%, #5a9bff 0%, #2979ff 70%, #1c5cd9 100%);
-  --gradient-orb-teal: radial-gradient(circle at 35% 35%, #39d9b6 0%, #04e1cb 60%, #00b3ff 100%);
-  --gradient-orb-violet: radial-gradient(circle at 35% 35%, #c29ef0 0%, #8a59f2 60%, #5a3bd0 100%);
-  /* Thin fading accent rules, TC-style section separators. */
-  --rule-teal: linear-gradient(to right, transparent, var(--color-teal), transparent);
-  --rule-violet: linear-gradient(to right, transparent, var(--color-violet), transparent);
+      #ffeaf3 0%,
+      #fafcfd 52%,
+      #ffffff 100%);
+  --gradient-brand: linear-gradient(135deg, #a0175f 0%, #720042 100%);
+  --gradient-orb: radial-gradient(circle at 35% 35%, #ffb3d4 0%, #fe82b8 65%, #e0609a 100%);
+  --gradient-orb-teal: radial-gradient(circle at 35% 35%, #a8e6d4 0%, #3fb9a6 60%, #0f766e 100%);
+  --gradient-orb-violet: radial-gradient(circle at 35% 35%, #b9c4f5 0%, #8f9bf0 60%, #5a63c0 100%);
+  /* Thin fading accent rules (section separators). */
+  --rule-teal: linear-gradient(to right, transparent, var(--color-pink), transparent);
+  --rule-violet: linear-gradient(to right, transparent, var(--color-blue), transparent);
 
-  /* Typography — geometric demi display (ITC Avant Garde substitute: Poppins)
-     paired with a neutral humanist body for strong family contrast. */
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'Poppins', 'Sora', system-ui, sans-serif;
+  /* Typography — Cairo display + IBM Plex Sans body + Fira Code mono (VizChitra). */
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Cairo', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Fira Code', ui-monospace, 'Cascadia Code', Consolas, monospace;
   --text-sm: clamp(0.82rem, 0.8rem + 0.1vw, 0.9rem);
   --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
   --text-lg: clamp(1.2rem, 1.1rem + 0.5vw, 1.5rem);
@@ -70,13 +75,13 @@
   --space-8: 4rem;
   --space-section: clamp(3.5rem, 2.5rem + 5vw, 8rem);
 
-  /* Radius / elevation. */
-  --radius-sm: 0.5rem;
-  --radius: 0.9rem;
-  --radius-lg: 1.4rem;
-  --shadow-sm: 0 1px 2px oklch(40% 0.03 255 / 0.06);
-  --shadow: 0 8px 30px oklch(40% 0.05 255 / 0.08);
-  --shadow-lg: 0 24px 60px oklch(40% 0.08 255 / 0.12);
+  /* Radius / elevation — editorial, near-square cards; pills stay 999px. */
+  --radius-sm: 0.3rem;
+  --radius: 0.55rem;
+  --radius-lg: 0.85rem;
+  --shadow-sm: 0 1px 2px rgba(16, 18, 20, 0.06);
+  --shadow: 0 8px 30px rgba(16, 18, 20, 0.09);
+  --shadow-lg: 0 24px 60px rgba(16, 18, 20, 0.14);
 
   /* Motion. */
   --duration-fast: 150ms;

@@ -13,10 +13,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Faint paper grain over the whole ground (VizChitra-inspired). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 1.08;
+  letter-spacing: -0.005em;
   text-wrap: balance;
 }
 
@@ -26,8 +37,9 @@ img { max-width: 100%; height: auto; display: block; }
 .wrap { width: min(var(--maxw), 100% - 2.5rem); margin-inline: auto; }
 .section { padding-block: var(--space-section); }
 .eyebrow {
-  text-transform: uppercase; letter-spacing: 0.12em; font-size: var(--text-sm);
-  font-weight: 600; color: var(--color-brand);
+  font-family: var(--font-mono);
+  text-transform: uppercase; letter-spacing: 0.16em; font-size: var(--text-sm);
+  font-weight: 600; color: var(--color-brand-strong);
 }
 .lead { font-size: var(--text-lg); color: var(--color-text-muted); max-width: 48ch; }
 

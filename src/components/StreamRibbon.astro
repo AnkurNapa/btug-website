@@ -1,0 +1,67 @@
+---
+// Signature streamgraph ribbon — a flowing, chart-like band that opens every
+// page (VizChitra-inspired). Rendered on Canvas; pauses for reduced-motion.
+---
+<div class="ribbon-band" aria-hidden="true">
+  <canvas class="ribbon-canvas"></canvas>
+</div>
+
+<style>
+  .ribbon-band {
+    position: relative;
+    width: 100%;
+    height: clamp(120px, 18vw, 240px);
+    overflow: hidden;
+    background: var(--color-surface);
+  }
+  .ribbon-canvas { display: block; width: 100%; height: 100%; }
+</style>
+
+<script>
+  function initRibbon(band: HTMLElement) {
+    const cv = band.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    if (!ctx) return;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const bands = ['#a8e6d4', '#a9bbf3', '#f4c9dd', '#ffd98a', '#f2a3c4', '#f0906a', '#fbe4a8', '#e0609a'];
+    let W = 0, H = 0, dpr = 1;
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = band.clientWidth; H = band.clientHeight;
+      cv!.width = W * dpr; cv!.height = H * dpr;
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function draw(t: number) {
+      ctx!.clearRect(0, 0, W, H);
+      const n = bands.length;
+      const thick = H / (n * 0.6);
+      for (let i = 0; i < n; i++) {
+        const ph = t * 0.00016 * (1 + i * 0.06) + i * 0.9;
+        const baseY = H * 0.14 + (i / (n - 1)) * (H * 0.6);
+        const amp = H * (0.11 + 0.02 * (i % 3));
+        ctx!.beginPath();
+        ctx!.moveTo(0, baseY);
+        for (let x = 0; x <= W; x += 12) {
+          const k = x / W;
+          ctx!.lineTo(x, baseY + Math.sin(k * 5 + ph) * amp + Math.sin(k * 11 - ph * 1.4) * amp * 0.35);
+        }
+        for (let x = W; x >= 0; x -= 12) {
+          const k = x / W;
+          ctx!.lineTo(x, baseY + thick + Math.sin(k * 5 + ph) * amp + Math.sin(k * 11 - ph * 1.4) * amp * 0.35);
+        }
+        ctx!.closePath();
+        ctx!.fillStyle = bands[i];
+        ctx!.globalAlpha = 0.92;
+        ctx!.fill();
+      }
+      ctx!.globalAlpha = 1;
+    }
+    function loop(t: number) { draw(t); if (!reduce) requestAnimationFrame(loop); }
+    window.addEventListener('resize', () => { resize(); draw(performance.now()); });
+    resize();
+    if (reduce) draw(1200); else requestAnimationFrame(loop);
+  }
+  document.querySelectorAll<HTMLElement>('.ribbon-band').forEach(initRibbon);
+</script>

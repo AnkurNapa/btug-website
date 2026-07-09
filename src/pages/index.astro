@@ -9,6 +9,8 @@ import '../styles/global.css';
 import Countdown from '../components/Countdown.astro';
 import NewsletterSignup from '../components/NewsletterSignup.astro';
 import Footer from '../components/Footer.astro';
+import SiteTicker from '../components/SiteTicker.astro';
+import StreamRibbon from '../components/StreamRibbon.astro';
 import site from '../data/site.yaml';
 import {
   registrationState,
@@ -108,6 +110,7 @@ const pageDesc = data.summary ?? site.tagline;
   </head>
   <body>
     <a class="skip-link" href="#register">Skip to registration</a>
+    <SiteTicker />
 
     <header class="promo-header">
       <div class="wrap promo-header__inner">
@@ -123,6 +126,8 @@ const pageDesc = data.summary ?? site.tagline;
         </div>
       </div>
     </header>
+
+    <StreamRibbon />
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
