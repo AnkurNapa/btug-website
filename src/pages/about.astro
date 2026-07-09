@@ -2,6 +2,14 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import site from '../data/site.yaml';
+import organizers from '../data/organizers.yaml';
+
+const whatYouFind = [
+  'Updates on upcoming BTUG events, meetups and community sessions',
+  'Session recordings, presentation materials and shared learning resources',
+  'Announcements about workshops, trainings and special Tableau initiatives',
+  'Community highlights, speaker sessions and member-led discussions',
+];
 
 const values = [
   { name: 'Learn', body: 'Grow real Tableau and analytics skills through hands-on sessions and peer mentoring.' },
@@ -10,6 +18,9 @@ const values = [
   { name: 'Collaborate', body: 'Build together across companies, roles and experience levels.' },
   { name: 'Grow Together', body: 'Lift the whole community, from first-time learners to seasoned practitioners.' },
 ];
+
+const initials = (name: string) =>
+  name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 ---
 <BaseLayout
   title="About"
@@ -26,7 +37,30 @@ const values = [
     </div>
   </section>
 
-  <section class="section section-sunken" aria-labelledby="mission-heading">
+  <section class="section section-sunken" aria-labelledby="overview-heading">
+    <div class="wrap overview-grid">
+      <article class="card panel">
+        <h2 id="overview-heading">Your one-stop destination</h2>
+        <p>
+          This is your one-stop destination for everything related to the Bengaluru Tableau
+          User Group. Here you will find information and resources designed to help you
+          learn, connect and grow as part of the Tableau community.
+        </p>
+        <p class="overview-note">
+          This group is exclusively for Bengaluru Tableau User Group members interested in
+          expanding their Tableau skills and engaging with the local analytics community.
+        </p>
+      </article>
+      <aside class="card panel find-card" aria-label="What you'll find here">
+        <h3>What you'll find here</h3>
+        <ul class="find-list">
+          {whatYouFind.map((item) => <li>{item}</li>)}
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="mission-heading">
     <div class="wrap mission-grid">
       <article class="card panel">
         <h2 id="mission-heading">Our mission</h2>
@@ -39,7 +73,7 @@ const values = [
     </div>
   </section>
 
-  <section class="section" aria-labelledby="values-heading">
+  <section class="section section-sunken" aria-labelledby="values-heading">
     <div class="wrap">
       <SectionHeading eyebrow="What we stand for" title="Our core values" id="values-heading" />
       <ul class="values-grid">
@@ -47,6 +81,29 @@ const values = [
           <li class="card value-card">
             <h3>{value.name}</h3>
             <p>{value.body}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="organizers-heading">
+    <div class="wrap">
+      <SectionHeading
+        eyebrow="Volunteer-led"
+        title="Meet the organizers"
+        lead="BTUG is run by a team of volunteers who plan the events, host the sessions and keep the community thriving."
+        id="organizers-heading"
+      />
+      <ul class="organizers-grid">
+        {organizers.map((person: { name: string; role: string; company: string }) => (
+          <li class="card organizer-card">
+            <span class="avatar" aria-hidden="true">{initials(person.name)}</span>
+            <div class="organizer-meta">
+              <h3>{person.name}</h3>
+              <p class="organizer-role">{person.role}</p>
+              <p class="organizer-company">{person.company}</p>
+            </div>
           </li>
         ))}
       </ul>
@@ -71,23 +128,44 @@ const values = [
 
 <style>
   .section-sunken { background: var(--color-surface-sunken); }
-  .mission-grid { display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
+  .mission-grid, .overview-grid { display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
   .panel { padding: var(--space-6); display: grid; gap: 0.75rem; }
   .panel h2 { font-size: var(--text-lg); color: var(--color-brand-strong); }
+
+  .overview-note { color: var(--color-text-muted); font-size: var(--text-sm); }
+  .find-card h3 { font-size: var(--text-lg); color: var(--color-brand); }
+  .find-list { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.45rem; color: var(--color-text-muted); }
+  .find-list li { padding-left: 0.15rem; }
 
   .values-grid { list-style: none; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
   .value-card { padding: var(--space-4); display: grid; gap: 0.4rem; }
   .value-card h3 { font-size: var(--text-lg); color: var(--color-brand); }
   .value-card p { color: var(--color-text-muted); }
 
+  .organizers-grid { list-style: none; padding: 0; margin-top: var(--space-4); display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
+  .organizer-card { padding: var(--space-4); display: flex; align-items: center; gap: var(--space-3); }
+  .avatar {
+    flex: 0 0 auto; width: 3rem; height: 3rem; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--color-brand-soft); color: var(--color-brand-strong);
+    font-family: var(--font-display); font-weight: 700; font-size: var(--text-base);
+    letter-spacing: 0.02em;
+  }
+  .organizer-meta { display: grid; gap: 0.1rem; }
+  .organizer-meta h3 { font-size: var(--text-base); color: var(--color-brand); }
+  .organizer-role { font-size: var(--text-sm); }
+  .organizer-company { font-size: var(--text-sm); color: var(--color-text-muted); }
+
   .note { padding: var(--space-6); display: grid; gap: 0.6rem; border-left: 4px solid var(--color-accent); }
   .note h2 { font-size: var(--text-lg); }
 
   @media (min-width: 720px) {
-    .mission-grid { grid-template-columns: repeat(2, 1fr); }
+    .mission-grid, .overview-grid { grid-template-columns: repeat(2, 1fr); }
     .values-grid { grid-template-columns: repeat(3, 1fr); }
+    .organizers-grid { grid-template-columns: repeat(2, 1fr); }
   }
   @media (min-width: 1024px) {
     .values-grid { grid-template-columns: repeat(5, 1fr); }
+    .organizers-grid { grid-template-columns: repeat(3, 1fr); }
   }
 </style>

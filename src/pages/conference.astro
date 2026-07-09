@@ -166,6 +166,7 @@ const jsonLd = {
   .conf-lead { max-width: 50ch; }
   .conf-facts { display: grid; gap: var(--space-3); grid-template-columns: 1fr; margin-block: var(--space-2); }
   .conf-facts dt { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-brand); font-weight: 600; }
+  .conf-facts dd { overflow-wrap: anywhere; }
   .conf-facts dd { font-weight: 500; }
 
   .cards-grid { list-style: none; padding: 0; display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
@@ -190,7 +191,7 @@ const jsonLd = {
   .register-band h2 { font-size: var(--text-lg); color: var(--color-brand-strong); }
 
   @media (min-width: 720px) {
-    .conf-facts { grid-template-columns: repeat(2, max-content); gap: var(--space-6); }
+    .conf-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
     .venue-grid { grid-template-columns: 3fr 2fr; align-items: start; }
   }

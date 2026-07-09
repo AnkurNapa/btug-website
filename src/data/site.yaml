@@ -1,6 +1,7 @@
 # Global site configuration: nav, socials, chat invites, and form endpoints.
 name: Bengaluru Tableau User Group
 shortName: BTUG
+region: APAC
 tagline: Empowering Bengaluru's Data Community Through Learning, Collaboration & Innovation
 
 nav:
@@ -18,8 +19,9 @@ nav:
   - { label: Contact, href: /contact }
 
 socials:
-  linkedin: https://www.linkedin.com/company/bengaluru-tableau-user-group
-  instagram: https://www.instagram.com/btug.community
+  linkedin: https://www.linkedin.com/company/bengaluru-tug
+  instagram: https://www.instagram.com/bengalurutug
+  website: https://btug-yrx6mvvuiq-uw.a.run.app
 
 # Community chat invites expire — see runbook: check these monthly.
 chatInvites:

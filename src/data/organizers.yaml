@@ -1,0 +1,18 @@
+# BTUG core organizing team — single source of truth for the About page.
+# Edit here to add/remove/reorder organizers; the "Meet the organizers"
+# section on /about renders straight from this list.
+- name: Ravi Kumar N
+  role: Co-Lead
+  company: Digital.Ai
+- name: Ankur Napa
+  role: Data Analyst / Tableau Developer
+  company: Disruptive Advantage
+- name: Devendra Singh
+  role: Head of Digital
+  company: Muah LTD
+- name: Jacquelline Antony
+  role: Program Manager - Data Insights & Analytics
+  company: TE Connectivity
+- name: Arshi Saleh
+  role: Tableau Developer
+  company: Freelance

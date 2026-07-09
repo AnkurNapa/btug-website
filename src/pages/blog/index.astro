@@ -81,6 +81,9 @@ const filters = [...filterSet].sort((a, b) => a.localeCompare(b));
     display: grid; gap: var(--space-4); grid-template-columns: 1fr;
   }
   .blog-grid-item[hidden] { display: none; }
+  /* min-width:0 lets tracks shrink below a cover image's intrinsic width. */
+  .blog-grid-item { min-width: 0; }
+  .blog-grid-item img { width: 100%; }
   .empty, .filter-empty { color: var(--color-text-muted); }
   @media (min-width: 640px) { .blog-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 1000px) { .blog-grid { grid-template-columns: repeat(3, 1fr); } }

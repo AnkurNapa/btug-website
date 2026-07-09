@@ -6,7 +6,6 @@
 import { getEntry } from 'astro:content';
 import '../styles/tokens.css';
 import '../styles/global.css';
-import AnimatedBackground from '../components/AnimatedBackground.astro';
 import Countdown from '../components/Countdown.astro';
 import NewsletterSignup from '../components/NewsletterSignup.astro';
 import Footer from '../components/Footer.astro';
@@ -101,7 +100,7 @@ const pageDesc = data.summary ?? site.tagline;
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     {site.analytics?.plausibleDomain && (
       <script defer data-domain={site.analytics.plausibleDomain} src="https://plausible.io/js/script.js"></script>
@@ -127,11 +126,44 @@ const pageDesc = data.summary ?? site.tagline;
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
-        <AnimatedBackground />
+        <div class="hero__orbs" aria-hidden="true">
+          <span class="orb orb--blue"></span>
+          <span class="orb orb--teal"></span>
+          <span class="orb orb--violet"></span>
+        </div>
         <div class="wrap hero__inner">
-          <p class="eyebrow">Hands-on Workshop · Bengaluru · In person</p>
-          <h1 id="hero-title">{data.name}</h1>
-          <p class="lead hero__lead">{data.summary}</p>
+          <p class="hero__kicker">Hands-on Workshop · Bengaluru · In person</p>
+          <h1 id="hero-title">Get hands on with data.<br />Build a real Tableau Prep flow.</h1>
+          <p class="hero__lead">{data.summary}</p>
+
+          <div class="hero__lockup" aria-label="Date and location">
+            <span class="hero__date">Sat, 22 Aug 2026 · 10:00 IST</span>
+            <span class="hero__dot" aria-hidden="true">·</span>
+            <span class="hero__venue">{data.venue}</span>
+          </div>
+
+          <div class="hero__cta" id="register">
+            {canRegister ? (
+              <a class="btn btn-on-dark btn-lg" href={data.registrationUrl}>
+                {state === 'waitlist' ? 'Join the waitlist' : 'Register free'}
+              </a>
+            ) : (
+              <span class="btn btn-on-dark btn-lg" aria-disabled="true">{registrationLabel(state)}</span>
+            )}
+            <a class="btn btn-ghost-dark btn-lg" href="#community">Join the community</a>
+          </div>
+
+          {remaining !== null && canRegister && (
+            <p class="hero__seats">
+              {remaining > 0
+                ? <><span class="hero__seats-dot" aria-hidden="true"></span>Only <strong>{remaining}</strong> of {data.capacity} seats left</>
+                : <>Seats full — join the waitlist</>}
+            </p>
+          )}
+
+          <div class="hero__countdown">
+            <Countdown date={data.date} label="Workshop starts in" />
+          </div>
 
           <ul class="hero__facts" aria-label="Event details">
             <li>
@@ -142,27 +174,6 @@ const pageDesc = data.summary ?? site.tagline;
             <li><strong>Where</strong><span>{data.venue}</span></li>
             <li><strong>Cost</strong><span>Free for the community</span></li>
           </ul>
-
-          <Countdown date={data.date} label="Workshop starts in" />
-
-          <div class="hero__cta" id="register">
-            {canRegister ? (
-              <a class="btn btn-primary btn-lg" href={data.registrationUrl}>
-                {state === 'waitlist' ? 'Join the waitlist' : 'Register free'}
-              </a>
-            ) : (
-              <span class="btn btn-primary btn-lg" aria-disabled="true">{registrationLabel(state)}</span>
-            )}
-            <a class="btn btn-secondary btn-lg" href="#community">Join the community</a>
-          </div>
-
-          {remaining !== null && canRegister && (
-            <p class="hero__seats">
-              {remaining > 0
-                ? <>Only <strong>{remaining}</strong> of {data.capacity} seats left</>
-                : <>Seats full — join the waitlist</>}
-            </p>
-          )}
         </div>
       </section>
 
@@ -188,14 +199,17 @@ const pageDesc = data.summary ?? site.tagline;
         </ul>
       </section>
 
-      <section class="section wrap who" aria-labelledby="who-title">
-        <div>
-          <p class="eyebrow">Who it's for</p>
-          <h2 id="who-title">Built for people new to Prep</h2>
+      <section class="band-dark" aria-labelledby="who-title">
+        <span class="band-orb" aria-hidden="true"></span>
+        <div class="section wrap who">
+          <div>
+            <p class="hero__kicker">Who it's for</p>
+            <h2 id="who-title">Built for people<br />new to Prep</h2>
+          </div>
+          <ul class="who__list" role="list">
+            {audience.map((a) => <li>{a}</li>)}
+          </ul>
         </div>
-        <ul class="who__list" role="list">
-          {audience.map((a) => <li>{a}</li>)}
-        </ul>
       </section>
 
       {speaker && (
@@ -237,16 +251,20 @@ const pageDesc = data.summary ?? site.tagline;
         </div>
       </section>
 
-      <section class="section final-cta wrap" aria-labelledby="final-title">
-        <h2 id="final-title">Save your seat for {data.name}</h2>
-        <p class="lead">{startIST} · {data.venue}</p>
-        {canRegister ? (
-          <a class="btn btn-primary btn-lg" href={data.registrationUrl}>
-            {state === 'waitlist' ? 'Join the waitlist' : 'Register free'}
-          </a>
-        ) : (
-          <span class="btn btn-primary btn-lg" aria-disabled="true">{registrationLabel(state)}</span>
-        )}
+      <section class="band-royal final-cta" aria-labelledby="final-title">
+        <span class="band-orb band-orb--right" aria-hidden="true"></span>
+        <div class="section wrap final-cta__inner">
+          <p class="hero__kicker">Plot your path from idea to impact</p>
+          <h2 id="final-title">Save your seat for the workshop</h2>
+          <p class="final-cta__meta">{startIST} · {data.venue}</p>
+          {canRegister ? (
+            <a class="btn btn-on-dark btn-lg" href={data.registrationUrl}>
+              {state === 'waitlist' ? 'Join the waitlist' : 'Register free'}
+            </a>
+          ) : (
+            <span class="btn btn-on-dark btn-lg" aria-disabled="true">{registrationLabel(state)}</span>
+          )}
+        </div>
       </section>
     </main>
 
@@ -272,19 +290,48 @@ const pageDesc = data.summary ?? site.tagline;
       .btn-sm { padding: 0.45rem 0.9rem; font-size: var(--text-sm); }
       .btn-lg { padding: 0.95rem 1.7rem; font-size: var(--text-lg); }
 
-      .hero { position: relative; overflow: clip; background: var(--gradient-hero); padding-block: clamp(3rem, 2rem + 6vw, 6.5rem); }
-      .hero__inner { position: relative; z-index: 1; max-width: 54rem; }
-      .hero h1 { font-size: var(--text-hero); margin-top: 0.6rem; }
-      .hero__lead { margin-top: 1rem; font-size: var(--text-lg); }
-      .hero__facts { list-style: none; padding: 0; margin: 1.6rem 0 0; display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .hero__facts li { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.9rem 1rem; background: color-mix(in oklch, var(--color-surface-raised) 70%, transparent); border: 1px solid var(--color-border); border-radius: var(--radius); }
-      .hero__facts strong { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-brand); }
-      .hero__facts span { font-weight: 600; }
-      .hero__facts small { color: var(--color-text-muted); font-size: 0.8rem; }
+      /* HERO — royal-blue gradient field with glossy data orbs (TC style). */
+      .hero { position: relative; overflow: clip; background: var(--gradient-royal); color: var(--color-on-dark); padding-block: clamp(3.5rem, 2rem + 8vw, 7.5rem); }
+      .hero__inner { position: relative; z-index: 1; max-width: 56rem; }
+      .hero__orbs { position: absolute; inset: 0; z-index: 0; overflow: clip; }
+      .orb { position: absolute; border-radius: 50%; filter: blur(2px); opacity: 0.9; animation: float 14s var(--ease-out-expo) infinite alternate; }
+      .orb--blue { width: 340px; height: 340px; background: var(--gradient-orb); top: -80px; right: -60px; box-shadow: 0 30px 90px rgba(20,60,180,0.5); }
+      .orb--teal { width: 140px; height: 140px; background: var(--gradient-orb-teal); bottom: 8%; right: 16%; animation-delay: -3s; }
+      .orb--violet { width: 90px; height: 90px; background: var(--gradient-orb-violet); top: 24%; right: 38%; animation-delay: -7s; }
+      @keyframes float { from { transform: translateY(0) translateX(0); } to { transform: translateY(-22px) translateX(10px); } }
+
+      .hero__kicker { display: inline-block; font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.02em; padding: 0.4rem 0.9rem; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); color: #fff; }
+      .hero h1 { font-size: var(--text-hero); margin-top: 1rem; letter-spacing: -0.03em; line-height: 1.02; }
+      .hero__lead { margin-top: 1.1rem; font-size: var(--text-lg); color: var(--color-on-dark-muted); max-width: 46ch; }
+      .hero__lockup { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 1.4rem; font-weight: 600; }
+      .hero__dot { opacity: 0.5; }
+      .hero__venue { color: var(--color-on-dark-muted); font-weight: 500; }
       .hero__cta { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.8rem; }
-      .hero__seats { margin-top: 1rem; color: var(--color-text-muted); }
-      .hero__seats strong { color: var(--color-danger); }
+      .hero__seats { margin-top: 1.1rem; color: var(--color-on-dark-muted); display: inline-flex; align-items: center; gap: 0.5rem; }
+      .hero__seats strong { color: var(--color-teal); }
+      .hero__seats-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--color-teal); box-shadow: 0 0 0 4px rgba(4,225,203,0.25); animation: pulse 2s ease-in-out infinite; }
+      @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(4,225,203,0); } }
+      .hero__countdown { margin-top: 1.8rem; }
+      .hero__countdown :global(.countdown__label) { color: var(--color-on-dark-muted); }
+      .hero__countdown :global(.countdown__unit) { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); border-radius: var(--radius-sm); padding: 0.5rem 0.8rem; }
+      .hero__countdown :global(.countdown__unit span) { color: #fff; }
+      .hero__countdown :global(.countdown__unit small) { color: var(--color-on-dark-muted); }
+      .hero__countdown :global(.countdown__started) { color: var(--color-teal); }
+      .hero__facts { list-style: none; padding: 0; margin: 1.8rem 0 0; display: grid; gap: 0.9rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .hero__facts li { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.9rem 1rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); border-radius: var(--radius); backdrop-filter: blur(4px); }
+      .hero__facts strong { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-teal); }
+      .hero__facts span { font-weight: 600; }
+      .hero__facts small { color: var(--color-on-dark-muted); font-size: 0.8rem; }
       @media (max-width: 620px) { .hero__facts { grid-template-columns: 1fr; } }
+
+      /* Dark full-bleed bands for rhythm (who / final CTA). */
+      .band-dark, .band-royal { position: relative; overflow: clip; color: var(--color-on-dark); }
+      .band-dark { background: var(--gradient-night); }
+      .band-royal { background: var(--gradient-royal); }
+      .band-orb { position: absolute; width: 280px; height: 280px; border-radius: 50%; background: var(--gradient-orb); opacity: 0.55; filter: blur(6px); top: -90px; left: -70px; z-index: 0; }
+      .band-orb--right { left: auto; right: -70px; top: auto; bottom: -90px; background: var(--gradient-orb-teal); }
+      .band-dark > .wrap, .band-royal > .wrap { position: relative; z-index: 1; }
+      .band-dark .hero__kicker, .band-royal .hero__kicker { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.22); }
 
       .about__body { max-width: 60ch; margin-top: 1rem; color: var(--color-text); }
       .about__body :global(h2) { font-size: var(--text-lg); margin-top: 1.5rem; }
@@ -300,8 +347,8 @@ const pageDesc = data.summary ?? site.tagline;
       .who { display: grid; gap: 1.5rem; grid-template-columns: 1fr 1.2fr; align-items: start; }
       @media (max-width: 760px) { .who { grid-template-columns: 1fr; } }
       .who__list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.7rem; }
-      .who__list li { padding: 0.9rem 1.1rem; background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius); position: relative; padding-left: 2.4rem; }
-      .who__list li::before { content: '✓'; position: absolute; left: 1rem; color: var(--color-success); font-weight: 700; }
+      .who__list li { padding: 0.9rem 1.1rem 0.9rem 2.6rem; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16); border-radius: var(--radius); position: relative; color: #fff; }
+      .who__list li::before { content: '✓'; position: absolute; left: 1rem; color: var(--color-teal); font-weight: 700; }
 
       .speaker-strip { display: flex; gap: 1.2rem; align-items: center; padding: 1.4rem; margin-top: 1.2rem; }
       .speaker-strip__avatar { flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--gradient-brand); color: #fff; display: grid; place-items: center; font-family: var(--font-display); font-size: var(--text-xl); }
@@ -316,9 +363,9 @@ const pageDesc = data.summary ?? site.tagline;
       .community-band { background: var(--color-brand-soft); border-block: 1px solid var(--color-border); }
       .community-band .lead { margin-top: 0.6rem; }
 
-      .final-cta { text-align: center; }
-      .final-cta h2 { font-size: var(--text-2xl); }
-      .final-cta .lead { margin: 0.6rem auto 1.6rem; }
+      .final-cta__inner { text-align: center; }
+      .final-cta h2 { font-size: var(--text-2xl); letter-spacing: -0.02em; margin-top: 0.8rem; }
+      .final-cta__meta { margin: 0.6rem auto 1.6rem; color: var(--color-on-dark-muted); font-weight: 500; }
     </style>
   </body>
 </html>
